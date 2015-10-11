@@ -19,3 +19,12 @@ Build
     $ make
 
     $ make install
+
+Usage
+------
+
+::
+
+   >> import forexconnect
+   >> cl = forexconnect.ForexConnectClient("usrname", "pass", "Real")
+   >> cl.logout()

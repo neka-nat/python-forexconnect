@@ -9,7 +9,7 @@ include_directories(${Boost_INCLUDE_DIRS}
   ${FOREXCONNECT_DIR}/api/include
   ${SAMPLE_TOOLS_DIR}/include)   
 
-link_directories(${FOREXCONNECT_DIR}/api/lib
-  ${SAMPLE_TOOLS_DIR}/lib)
+link_directories(${FOREXCONNECT_DIR}/api/lib)
 
+add_subdirectory(${SAMPLE_TOOLS_DIR})
 add_subdirectory(forexconnect)

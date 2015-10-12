@@ -35,27 +35,6 @@ namespace pyforexconnect
     };
     std::ostream& operator<<(std::ostream& out, TradeInfo const& ti);
 
-    struct OrderParams
-    {
-	std::string mInstrument;
-	std::string mBuySell;
-	std::string mContingencyID;
-	std::string mOrderID;
-	std::string mPrimaryID;
-	std::string mSecondaryID;
-	std::string mTimeframe;
-	std::string mAccount;
-	std::string mOrderType;
-	std::string mStatus;
-	std::string mExpDate;
-	int mLots;
-	DATE mDateFrom;
-	DATE mDateTo;
-	double mRate;
-	double mRateStop;
-	double mRateLimit;
-    };
-
     class SessionStatusListener : public IO2GSessionStatus
     {
     public:
@@ -95,7 +74,10 @@ namespace pyforexconnect
 	~ForexConnectClient();
 	void printAccounts() const;
         std::vector<TradeInfo> getTrades(); 
-	bool sendEntryOrder();
+	bool openPosition(const std::string& instrument,
+			  const std::string& buysell,
+			  int amount);
+	bool closePosition(const std::string& tradeID);
 	bool login();
 	void logout();
     private:

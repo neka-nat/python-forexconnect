@@ -278,11 +278,11 @@ std::vector<TradeInfo> ForexConnectClient::getTrades()
 {
     std::vector<TradeInfo> trades;
     O2G2Ptr<IO2GTableManager> tableManager = getLoadedTableManager();
-
-    O2G2Ptr<IO2GTradesTable> tradesTable = (IO2GTradesTable *)tableManager->getTable(Trades);
+    O2G2Ptr<IO2GTradesTable> tradesTable = static_cast<IO2GTradesTable*>(tableManager->getTable(Trades));
     IO2GTradeTableRow* tradeRow = NULL;
     IO2GTableIterator tableIterator;
-    while (tradesTable->getNextRow(tableIterator, tradeRow)) {
+    while (tradesTable->getNextRow(tableIterator, tradeRow))
+    {
         O2G2Ptr<IO2GOfferRow> offer = getTableRow<IO2GOfferRow, IO2GOffersTableResponseReader>(Offers, tradeRow->getOfferID(), &findOfferRowByOfferId, &getOffersReader);
 	TradeInfo trade;
         trade.mInstrument = offer->getInstrument();
@@ -296,6 +296,106 @@ std::vector<TradeInfo> ForexConnectClient::getTrades()
         tradeRow->release();
     }
     return trades;
+}
+
+bool ForexConnectClient::openPosition(const std::string& instrument,
+				      const std::string& buysell,
+				      int amount)
+{
+    if (buysell != O2G2::Sell && buysell != O2G2::Buy)
+    {
+	return false;
+    }
+
+    O2G2Ptr<IO2GTableManager> tableManager = getLoadedTableManager();
+    O2G2Ptr<IO2GOffersTable> offersTable = static_cast<IO2GOffersTable*>(tableManager->getTable(Offers));
+
+    IO2GOfferTableRow *offerRow = NULL;
+    IO2GTableIterator tableIterator;
+
+    std::string offerID;
+    while (offersTable->getNextRow(tableIterator, offerRow)) {
+	if (instrument == offerRow->getInstrument()) {
+	    break;
+	}
+    }
+    if (offerRow) {
+	offerID = offerRow->getOfferID();
+	offerRow->release();
+    } else {
+	std::cout << "Could not find offer row for instrument " << instrument << std::endl;
+	return false;
+    }
+    O2G2Ptr<IO2GTradingSettingsProvider> tradingSettingsProvider = mpLoginRules->getTradingSettingsProvider();
+    int iBaseUnitSize = tradingSettingsProvider->getBaseUnitSize(instrument.c_str(), mpAccountRow);
+    O2G2Ptr<IO2GValueMap> valuemap = mpRequestFactory->createValueMap();
+    valuemap->setString(Command, O2G2::Commands::CreateOrder);
+    valuemap->setString(OrderType, O2G2::Orders::TrueMarketOpen);
+    valuemap->setString(AccountID, mAccountID.c_str());
+    valuemap->setString(OfferID, offerID.c_str());
+    valuemap->setString(BuySell, buysell.c_str());
+    valuemap->setInt(Amount, amount * iBaseUnitSize);
+    valuemap->setString(TimeInForce, O2G2::TIF::IOC);
+    valuemap->setString(CustomID, "TrueMarketOrder");
+    O2G2Ptr<IO2GRequest> request = mpRequestFactory->createOrderRequest(valuemap);
+    if (!request)
+    {
+        std::cout << mpRequestFactory->getLastError() << std::endl;
+        return false;
+    }
+    mpResponseListener->setRequestID(request->getRequestID());
+    mpSession->sendRequest(request);
+    if (mpResponseListener->waitEvents())
+    {
+	Sleep(1000); // Wait for the balance update
+	std::cout << "Done!" << std::endl;
+	return true;
+    }
+    std::cout << "Response waiting timeout expired" << std::endl;
+    return false;
+}
+
+bool ForexConnectClient::closePosition(const std::string& tradeID)
+{
+    O2G2Ptr<IO2GTableManager> tableManager = getLoadedTableManager();
+    O2G2Ptr<IO2GTradesTable> tradesTable = static_cast<IO2GTradesTable*>(tableManager->getTable(Trades));
+    IO2GTradeTableRow *tradeRow = NULL;
+    IO2GTableIterator tableIterator;
+    while (tradesTable->getNextRow(tableIterator, tradeRow)) {
+	if (tradeID == tradeRow->getTradeID()) {
+	    break;
+	}
+    }
+    if (!tradeRow) {
+	std::cout << "Could not find trade with ID = " << tradeID << std::endl;
+        return false;
+    }
+    O2G2Ptr<IO2GValueMap> valuemap = mpRequestFactory->createValueMap();
+    valuemap->setString(Command, O2G2::Commands::CreateOrder);
+    valuemap->setString(OrderType, O2G2::Orders::TrueMarketClose);
+    valuemap->setString(AccountID, mAccountID.c_str());
+    valuemap->setString(OfferID, tradeRow->getOfferID());
+    valuemap->setString(TradeID, tradeID.c_str());
+    valuemap->setString(BuySell, (strcmp(tradeRow->getBuySell(), O2G2::Buy) == 0) ? O2G2::Sell : O2G2::Buy);
+    tradeRow->release();
+    valuemap->setInt(Amount, tradeRow->getAmount());
+    valuemap->setString(CustomID, "CloseMarketOrder");
+    O2G2Ptr<IO2GRequest> request = mpRequestFactory->createOrderRequest(valuemap);
+    if (!request)
+    {
+        std::cout << mpRequestFactory->getLastError() << std::endl;
+        return false;
+    }
+    mpResponseListener->setRequestID(request->getRequestID());
+    mpSession->sendRequest(request);
+    if (mpResponseListener->waitEvents())
+    {
+	Sleep(1000); // Wait for the balance update
+	std::cout << "Done!" << std::endl;
+	return true;
+    }
+    std::cout << "Response waiting timeout expired" << std::endl;
+    return false;
 }
 
 template <class RowType, class ReaderType>

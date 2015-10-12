@@ -1,5 +1,7 @@
+
 set(SRCS src/pyforexconnect.cpp
-  src/ForexConnectClient.cpp)
+  src/ForexConnectClient.cpp
+  src/ResponseListener.cpp)
 add_library(forexconnect SHARED ${SRCS})
 target_link_libraries(forexconnect
   ForexConnect

@@ -1,4 +1,5 @@
 #include "ForexConnectClient.h"
+#include <string.h>
 #include <stdexcept>
 using namespace pyforexconnect;
 
@@ -15,6 +16,35 @@ LoginParams::LoginParams(const std::string& login,
       mPassword(password),
       mConnection(connection)
 {
+}
+
+TradeInfo::TradeInfo()
+    : mOpenRate(0.0),
+      mOpenDate(boost::posix_time::second_clock::local_time()),
+      mGrossPL(0.0)
+{
+}
+
+bool TradeInfo::operator==(const TradeInfo& other)
+{
+    return mTradeID == other.mTradeID;
+}
+
+bool TradeInfo::operator!=(const TradeInfo& other)
+{
+    return mTradeID != other.mTradeID;
+}
+
+std::ostream& pyforexconnect::operator<<(std::ostream& out, TradeInfo const& ti)
+{
+    out << "instrument: " << ti.mInstrument << std::endl
+	<< "trade_id: " << ti.mTradeID << std::endl
+	<< "but_sell: " << ti.mBuySell << std::endl
+	<< "open_rate: " << ti.mOpenRate << std::endl
+	<< "amount: " << ti.mAmount << std::endl
+	<< "open_date: " << ti.mOpenDate << std::endl
+	<< "gross_pl: " << ti.mGrossPL;
+    return out;
 }
 
 SessionStatusListener::SessionStatusListener(IO2GSession *session,
@@ -45,7 +75,6 @@ long SessionStatusListener::addRef()
     return InterlockedIncrement(&mRefCount);
 }
 
-/** Decrease reference counter. */
 long SessionStatusListener::release()
 {
     long rc = InterlockedDecrement(&mRefCount);
@@ -168,6 +197,11 @@ ForexConnectClient::ForexConnectClient(const LoginParams& loginParams)
 
 ForexConnectClient::~ForexConnectClient()
 {
+    mpRequestFactory->release();
+    mpAccountRow->release();
+    mpResponseReaderFactory->release();
+    mpSession->unsubscribeResponse(mpResponseListener);
+    mpResponseListener->release();
     if (mIsConnected)
     {
 	logout();
@@ -182,10 +216,36 @@ void ForexConnectClient::init()
     mpSession = CO2GTransport::createSession();
     mpListener = new SessionStatusListener(mpSession, false);
     mpSession->subscribeSessionStatus(mpListener);
+    mpSession->useTableManager(Yes, 0);
+
     if (!login())
     {
 	throw std::runtime_error("Login fail.");
     }
+
+    mpLoginRules = mpSession->getLoginRules();
+    if (!mpLoginRules->isTableLoadedByDefault(Accounts))
+    {
+	logout();
+        throw std::runtime_error("Accounts table not loaded");
+    }
+
+    O2G2Ptr<IO2GResponse> response = mpLoginRules->getTableRefreshResponse(Accounts);
+    if(!response)
+    {
+	logout();
+        throw std::runtime_error("No response to refresh accounts table request");
+    }
+
+    mpResponseReaderFactory = mpSession->getResponseReaderFactory();
+    O2G2Ptr<IO2GAccountsTableResponseReader> accountsResponseReader = mpResponseReaderFactory->createAccountsTableReader(response);
+    mpAccountRow = accountsResponseReader->getRow(0);
+    mAccountID = mpAccountRow->getAccountID();
+
+    mpResponseListener = new ResponseListener(mpSession);
+    mpSession->subscribeResponse(mpResponseListener);
+
+    mpRequestFactory = mpSession->getRequestFactory();
 }
 
 bool ForexConnectClient::login()
@@ -209,21 +269,92 @@ void ForexConnectClient::logout()
 
 void ForexConnectClient::printAccounts() const
 {
-    O2G2Ptr<IO2GResponseReaderFactory> readerFactory = mpSession->getResponseReaderFactory();
-    if (!readerFactory)
-    {
-        std::cout << "Cannot create response reader factory" << std::endl;
-        return;
+    std::cout << "AccountID: " << mpAccountRow->getAccountID() << ", "
+	      << "Balance: " << std::fixed << mpAccountRow->getBalance() << ", "
+	      << "Used margin: " << std::fixed << mpAccountRow->getUsedMargin() << std::endl;
+}
+
+std::vector<TradeInfo> ForexConnectClient::getTrades()
+{
+    std::vector<TradeInfo> trades;
+    O2G2Ptr<IO2GTableManager> tableManager = getLoadedTableManager();
+
+    O2G2Ptr<IO2GTradesTable> tradesTable = (IO2GTradesTable *)tableManager->getTable(Trades);
+    IO2GTradeTableRow* tradeRow = NULL;
+    IO2GTableIterator tableIterator;
+    while (tradesTable->getNextRow(tableIterator, tradeRow)) {
+        O2G2Ptr<IO2GOfferRow> offer = getTableRow<IO2GOfferRow, IO2GOffersTableResponseReader>(Offers, tradeRow->getOfferID(), &findOfferRowByOfferId, &getOffersReader);
+	TradeInfo trade;
+        trade.mInstrument = offer->getInstrument();
+	trade.mTradeID = tradeRow->getTradeID();
+        trade.mBuySell = tradeRow->getBuySell();
+        trade.mOpenRate = tradeRow->getOpenRate();
+        trade.mAmount = tradeRow->getAmount();
+        trade.mOpenDate = toPtime(tradeRow->getOpenTime());
+        trade.mGrossPL = tradeRow->getGrossPL();
+	trades.push_back(trade);
+        tradeRow->release();
     }
-    O2G2Ptr<IO2GLoginRules> loginRules = mpSession->getLoginRules();
-    O2G2Ptr<IO2GResponse> response = loginRules->getTableRefreshResponse(Accounts);
-    O2G2Ptr<IO2GAccountsTableResponseReader> accountsResponseReader = readerFactory->createAccountsTableReader(response);
-    std::cout.precision(2);
-    for (int i = 0; i < accountsResponseReader->size(); ++i)
-    {
-        O2G2Ptr<IO2GAccountRow> accountRow = accountsResponseReader->getRow(i);
-        std::cout << "AccountID: " << accountRow->getAccountID() << ", "
-                << "Balance: " << std::fixed << accountRow->getBalance() << ", "
-                << "Used margin: " << std::fixed << accountRow->getUsedMargin() << std::endl;
+    return trades;
+}
+
+template <class RowType, class ReaderType>
+RowType* ForexConnectClient::getTableRow(O2GTable table, std::string key, bool (*finderFunc)(RowType *, std::string), ReaderType* (*readerCreateFunc)(IO2GResponseReaderFactory* , IO2GResponse *)) {
+
+    O2G2Ptr<IO2GResponse> response;
+
+    if(!mpLoginRules->isTableLoadedByDefault(table) ) {
+        IO2GRequest *request = mpRequestFactory->createRefreshTableRequestByAccount(Trades, mAccountID.c_str());
+        if (!response) {
+            throw "No response to manual table refresh request";
+        }
+	mpResponseListener->setRequestID(request->getRequestID());
+	mpSession->sendRequest(request);
+	if (!mpResponseListener->waitEvents())
+	{
+	    throw "Response waiting timeout expired";
+	}
+    } else {
+        response = mpLoginRules->getTableRefreshResponse(table);
+        if (!response) {
+            throw "No response to automatic table refresh request";
+        }
     }
+
+    O2G2Ptr<ReaderType> reader = readerCreateFunc(mpResponseReaderFactory, response);
+
+    RowType *row = NULL;
+
+    for ( int i = 0; i < reader->size(); ++i ) {
+        row = reader->getRow(i);
+        if ( finderFunc(row, key) ) {
+                break;
+        }
+        row->release();
+        row = NULL;
+    }
+    if (row == NULL) {
+        std::stringstream ss;
+        ss << "Could not find row for key " << key;
+        throw ss.str().c_str();
+    }
+
+    return row;
+}
+
+IO2GTableManager* ForexConnectClient::getLoadedTableManager()
+{
+    O2G2Ptr<IO2GTableManager> tableManager = mpSession->getTableManager();
+    O2GTableManagerStatus managerStatus = tableManager->getStatus();
+    while (managerStatus == TablesLoading)
+    {
+	Sleep(50);
+	managerStatus = tableManager->getStatus();
+    }
+    
+    if (managerStatus == TablesLoadFailed)
+    {
+	throw std::runtime_error("Cannot refresh all tables of table manager");
+    }
+    return tableManager;
 }

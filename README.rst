@@ -27,4 +27,7 @@ Usage
 
    >> import forexconnect
    >> cl = forexconnect.ForexConnectClient("usrname", "pass", "Real")
+   >> ti = cl.get_trades()
+   >> ti[0].instrument
+      USD/JPY
    >> cl.logout()

@@ -8,4 +8,7 @@ client = forexconnect.ForexConnectClient(username,
                                          password,
                                          connection)
 client.print_accounts()
+trades = client.get_trades()
+for t in trades:
+    print t
 client.logout()

@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 2.8) 
 
-find_package(Boost COMPONENTS python REQUIRED)
+find_package(Boost COMPONENTS date_time python REQUIRED)
 find_package(PythonLibs REQUIRED)
 set(FOREXCONNECT_DIR "${CMAKE_CURRENT_SOURCE_DIR}/forexconnect")
 set(SAMPLE_TOOLS_DIR "${FOREXCONNECT_DIR}/sample_tools")

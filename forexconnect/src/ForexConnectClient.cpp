@@ -267,11 +267,19 @@ void ForexConnectClient::logout()
     mIsConnected = false;
 }
 
-void ForexConnectClient::printAccounts() const
+std::string ForexConnectClient::getAccountID() const
 {
-    std::cout << "AccountID: " << mpAccountRow->getAccountID() << ", "
-	      << "Balance: " << std::fixed << mpAccountRow->getBalance() << ", "
-	      << "Used margin: " << std::fixed << mpAccountRow->getUsedMargin() << std::endl;
+    return mpAccountRow->getAccountID();
+}
+
+double ForexConnectClient::getUsedMargin() const
+{
+    return mpAccountRow->getUsedMargin();
+}
+
+double ForexConnectClient::getBalance() const
+{
+    return mpAccountRow->getBalance();
 }
 
 std::vector<TradeInfo> ForexConnectClient::getTrades()

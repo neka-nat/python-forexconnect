@@ -72,14 +72,16 @@ namespace pyforexconnect
 			   const std::string& connection);
 	ForexConnectClient(const LoginParams& loginParams);
 	~ForexConnectClient();
-	void printAccounts() const;
-        std::vector<TradeInfo> getTrades(); 
+	std::vector<TradeInfo> getTrades(); 
 	bool openPosition(const std::string& instrument,
 			  const std::string& buysell,
 			  int amount);
 	bool closePosition(const std::string& tradeID);
 	double getBid(const std::string& instrument);
 	double getAsk(const std::string& instrument);
+	std::string getAccountID() const;
+	double getUsedMargin() const;
+	double getBalance() const;
 	bool login();
 	void logout();
     private:

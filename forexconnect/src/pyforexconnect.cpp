@@ -116,5 +116,7 @@ BOOST_PYTHON_MODULE(forexconnect)
 	.def("get_ask", &ForexConnectClient::getAsk)
 	.def("login", &ForexConnectClient::login)
 	.def("logout", &ForexConnectClient::logout)
-	.def("print_accounts", &ForexConnectClient::printAccounts);
+	.def("get_account_id", &ForexConnectClient::getAccountID)
+	.def("get_balance", &ForexConnectClient::getBalance)
+	.def("get_used_margin", &ForexConnectClient::getUsedMargin);
 }

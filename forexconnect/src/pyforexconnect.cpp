@@ -112,6 +112,8 @@ BOOST_PYTHON_MODULE(forexconnect)
 	.def("get_trades", &ForexConnectClient::getTrades)
 	.def("open_position", &ForexConnectClient::openPosition)
 	.def("close_position", &ForexConnectClient::closePosition)
+	.def("get_bid", &ForexConnectClient::getBid)
+	.def("get_ask", &ForexConnectClient::getAsk)
 	.def("login", &ForexConnectClient::login)
 	.def("logout", &ForexConnectClient::logout)
 	.def("print_accounts", &ForexConnectClient::printAccounts);

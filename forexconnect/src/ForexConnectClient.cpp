@@ -398,6 +398,22 @@ bool ForexConnectClient::closePosition(const std::string& tradeID)
     return false;
 }
 
+double ForexConnectClient::getBid(const std::string& instrument) {
+    O2G2Ptr<IO2GOfferRow> offer = getTableRow<IO2GOfferRow, IO2GOffersTableResponseReader>(Offers,
+											   instrument,
+											   &findOfferRowBySymbol,
+											   &getOffersReader);
+    return offer->getBid();
+}
+
+double ForexConnectClient::getAsk(const std::string& instrument) {
+    O2G2Ptr<IO2GOfferRow> offer = getTableRow<IO2GOfferRow, IO2GOffersTableResponseReader>(Offers,
+											   instrument,
+											   &findOfferRowBySymbol,
+											   &getOffersReader);
+    return offer->getAsk();
+}
+
 template <class RowType, class ReaderType>
 RowType* ForexConnectClient::getTableRow(O2GTable table, std::string key, bool (*finderFunc)(RowType *, std::string), ReaderType* (*readerCreateFunc)(IO2GResponseReaderFactory* , IO2GResponse *)) {
 

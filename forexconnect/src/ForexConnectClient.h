@@ -46,6 +46,13 @@ namespace pyforexconnect
 	bool operator==(const Prices& other);
 	bool operator!=(const Prices& other);
 	Prices();
+	Prices(boost::posix_time::ptime date,
+	       double value);
+	Prices(boost::posix_time::ptime date,
+	       double open,
+	       double high,
+	       double low,
+	       double close);
     };
     std::ostream& operator<<(std::ostream& out, Prices const& pr);
 
@@ -93,6 +100,10 @@ namespace pyforexconnect
 	bool closePosition(const std::string& tradeID);
 	double getBid(const std::string& instrument);
 	double getAsk(const std::string& instrument);
+	std::vector<Prices> getHistoricalPrices(const std::string& instrument,
+						const boost::posix_time::ptime& from,
+						const boost::posix_time::ptime& to,
+						const std::string& timeFrame);
 	std::string getAccountID() const;
 	double getUsedMargin() const;
 	double getBalance() const;
@@ -106,6 +117,7 @@ namespace pyforexconnect
 	IO2GTableManager* getLoadedTableManager();
         template <class RowType, class ReaderType>
             RowType* getTableRow(O2GTable, std::string, bool (*finderFunc)(RowType *, std::string), ReaderType* (*readerCreateFunc)(IO2GResponseReaderFactory* , IO2GResponse *));
+	std::vector<Prices> getPricesFromResponse(IO2GResponse* response);
 	LoginParams mLoginParams;
 	IO2GSession* mpSession;
 	SessionStatusListener* mpListener;
@@ -124,6 +136,14 @@ namespace pyforexconnect
             time_t t = time_t(d_int - 25569.0) * 86400 + time_t(floor((d_frac * 86400) + 0.5));
             return boost::posix_time::from_time_t(t);
         }
+
+	static double toOleTime(const boost::posix_time::ptime& t)
+	{
+	    double d;
+	    struct tm ttm = boost::posix_time::to_tm(t);
+	    CO2GDateUtils::CTimeToOleTime(&ttm, &d);
+	    return d;
+	}
 
         static bool findOfferRowBySymbol(IO2GOfferRow *row, std::string symbol)
 	{

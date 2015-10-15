@@ -1,7 +1,6 @@
 #include "ForexConnectClient.h"
 #include <boost/python.hpp>
 #include <boost/python/suite/indexing/vector_indexing_suite.hpp>
-#include <boost/python/suite/indexing/map_indexing_suite.hpp>
 #include <datetime.h>
 using namespace pyforexconnect;
 
@@ -124,10 +123,12 @@ BOOST_PYTHON_MODULE(forexconnect)
 	.def(init<std::string, std::string, std::string>())
 	.def("get_trades", &ForexConnectClient::getTrades)
 	.def("get_offers", &ForexConnectClient::getOffersForPython)
+	.def("is_connected", &ForexConnectClient::isConnected)
 	.def("open_position", &ForexConnectClient::openPosition)
 	.def("close_position", &ForexConnectClient::closePosition)
 	.def("get_bid", &ForexConnectClient::getBid)
 	.def("get_ask", &ForexConnectClient::getAsk)
+	.def("get_historical_prices", &ForexConnectClient::getHistoricalPrices)
 	.def("login", &ForexConnectClient::login)
 	.def("logout", &ForexConnectClient::logout)
 	.def("get_account_id", &ForexConnectClient::getAccountID)

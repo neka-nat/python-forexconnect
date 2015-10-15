@@ -69,6 +69,29 @@ Prices::Prices()
 {
 }
 
+Prices::Prices(boost::posix_time::ptime date,
+	       double value)
+    : mDate(date),
+      mOpen(value),
+      mHigh(value),
+      mLow(value),
+      mClose(value)
+{
+}
+
+Prices::Prices(boost::posix_time::ptime date,
+	       double open,
+	       double high,
+	       double low,
+	       double close)
+    : mDate(date),
+      mOpen(open),
+      mHigh(high),
+      mLow(low),
+      mClose(close)
+{
+}
+
 bool Prices::operator==(const Prices& other)
 {
     return mDate == other.mDate &&
@@ -230,13 +253,27 @@ bool SessionStatusListener::waitEvents()
 ForexConnectClient::ForexConnectClient(const std::string& login,
 				       const std::string& password,
 				       const std::string& connection)
-    : mLoginParams(login, password, connection)
+    : mLoginParams(login, password, connection),
+      mpSession(NULL),
+      mpListener(NULL),
+      mpResponseListener(NULL),
+      mpLoginRules(NULL),
+      mpAccountRow(NULL),
+      mpResponseReaderFactory(NULL),
+      mpRequestFactory(NULL)
 {
     init();
 }
 
 ForexConnectClient::ForexConnectClient(const LoginParams& loginParams)
-    : mLoginParams(loginParams)
+    : mLoginParams(loginParams),
+      mpSession(NULL),
+      mpListener(NULL),
+      mpResponseListener(NULL),
+      mpLoginRules(NULL),
+      mpAccountRow(NULL),
+      mpResponseReaderFactory(NULL),
+      mpRequestFactory(NULL)
 {
     init();
 }
@@ -493,6 +530,96 @@ double ForexConnectClient::getAsk(const std::string& instrument) {
 	throw std::runtime_error("Could not get offer table row.");
     }
     return offer->getAsk();
+}
+
+std::vector<Prices> ForexConnectClient::getHistoricalPrices(const std::string& instrument,
+							    const boost::posix_time::ptime& from,
+							    const boost::posix_time::ptime& to,
+    							    const std::string& timeFrame)
+{
+    std::vector<Prices> prices;
+    O2G2Ptr<IO2GTimeframeCollection> timeframeCollection = mpRequestFactory->getTimeFrameCollection();
+    O2G2Ptr<IO2GTimeframe> timeframe = timeframeCollection->get(timeFrame.c_str());
+    if (!timeframe)
+    {
+        std::cout << "Timeframe '" << timeFrame << "' is incorrect!" << std::endl;
+        return prices;
+    }
+    O2G2Ptr<IO2GRequest> request = mpRequestFactory->createMarketDataSnapshotRequestInstrument(instrument.c_str(),
+											       timeframe,
+											       timeframe->getQueryDepth());
+    DATE dtFrom = toOleTime(from);
+    DATE dtTo = toOleTime(to);
+    DATE dtFirst = dtTo;
+    do
+    {
+        mpRequestFactory->fillMarketDataSnapshotRequestTime(request, dtFrom, dtFirst, false);
+        mpResponseListener->setRequestID(request->getRequestID());
+        mpSession->sendRequest(request);
+        if (!mpResponseListener->waitEvents())
+        {
+            std::cout << "Response waiting timeout expired" << std::endl;
+            return prices;
+        }
+        // shift "to" bound to oldest datetime of returned data
+        O2G2Ptr<IO2GResponse> response = mpResponseListener->getResponse();
+        if (response && response->getType() == MarketDataSnapshot)
+        {
+	    O2G2Ptr<IO2GMarketDataSnapshotResponseReader> reader = mpResponseReaderFactory->createMarketDataSnapshotReader(response);
+	    if (reader->size() > 0)
+	    {
+		if (fabs(dtFirst - reader->getDate(0)) > 0.0001)
+		    dtFirst = reader->getDate(0); // earliest datetime of returned data
+		else
+		    break;
+	    }
+	    else
+	    {
+		std::cout << "0 rows received" << std::endl;
+		break;
+	    }
+	    std::vector<Prices> prc = getPricesFromResponse(response);
+	    prices.insert(prices.end(), prc.begin(), prc.end());
+	}
+	else
+	{
+	    break;
+	}
+    } while (dtFirst - dtFrom > 0.0001);
+    return prices;
+}
+
+std::vector<Prices> ForexConnectClient::getPricesFromResponse(IO2GResponse* response)
+{
+    std::vector<Prices> prices;
+    if (!response || response->getType() != MarketDataSnapshot)
+    {
+	return prices;
+    }
+    std::cout << "Request with RequestID='" << response->getRequestID() << "' is completed:" << std::endl;
+    O2G2Ptr<IO2GMarketDataSnapshotResponseReader> reader = mpResponseReaderFactory->createMarketDataSnapshotReader(response);
+    if (!reader)
+    {
+	return prices;
+    }
+    for (int ii = reader->size() - 1; ii >= 0; ii--)
+    {
+	DATE dt = reader->getDate(ii);
+	if (reader->isBar())
+	{
+	    prices.push_back(Prices(toPtime(dt),
+				    reader->getAskOpen(ii),
+				    reader->getAskHigh(ii),
+				    reader->getAskLow(ii),
+				    reader->getAskClose(ii)));
+	}
+	else
+	{
+	    prices.push_back(Prices(toPtime(dt),
+				    reader->getAsk(ii)));
+	}
+    }
+    return prices;
 }
 
 template <class RowType, class ReaderType>

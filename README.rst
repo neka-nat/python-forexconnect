@@ -1,5 +1,5 @@
-pyforexconnect
-==============
+python-forexconnect
+===================
 
 About
 ------
@@ -8,7 +8,17 @@ This library is a Python binding of Forexconnect API.
 Build
 -----
 
-    $ cd forexconnect
+First, set environment "FOREXCONNECT_ROOT" which is the path ForexConnectAPI installed.
+
+    $ export FOREXCONNECT_ROOT=/.../ForexConnectAPI
+
+Next, clone this repository.
+
+    $ git clone https://github.com/neka-nat/python-forexconnect.git
+
+Build and install.
+
+    $ cd python-forexconnect
 
     $ mkdir build
 

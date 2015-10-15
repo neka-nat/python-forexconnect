@@ -113,10 +113,10 @@ BOOST_PYTHON_MODULE(forexconnect)
 	.def_readwrite("low", &Prices::mLow)
 	.def_readwrite("close", &Prices::mClose);
 
-    class_<std::vector<TradeInfo> >("vector<TradeInfo>")
+    class_<std::vector<TradeInfo> >("TradeInfoList")
 	.def(vector_indexing_suite<std::vector<TradeInfo> >());
 
-    class_<std::vector<Prices> >("vector<Prices>")
+    class_<std::vector<Prices> >("PricesList")
 	.def(vector_indexing_suite<std::vector<Prices> >());
 
     class_<ForexConnectClient>("ForexConnectClient", init<LoginParams>())

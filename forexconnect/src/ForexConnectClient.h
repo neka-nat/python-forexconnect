@@ -4,6 +4,7 @@
 #include "stdafx.h"
 #include "ResponseListener.h"
 #include <boost/date_time/posix_time/posix_time.hpp>
+#include <boost/python/dict.hpp>
 #include <sstream>
 #include <iomanip>
 
@@ -95,6 +96,9 @@ namespace pyforexconnect
 	std::string getAccountID() const;
 	double getUsedMargin() const;
 	double getBalance() const;
+	std::map<std::string, std::string> getOffers();
+	boost::python::dict getOffersForPython();
+	bool isConnected() const;
 	bool login();
 	void logout();
     private:

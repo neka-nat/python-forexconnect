@@ -5,6 +5,19 @@ using namespace pyforexconnect;
 
 static std::string FOREX_URL = "http://www40.fxcorporate.com/Hosts.jsp";
 
+namespace
+{
+    template <class K, class V>
+    boost::python::dict map_to_python_dict(const std::map<K, V>& map) {
+	typename std::map<K, V>::const_iterator iter;
+	boost::python::dict dictionary;
+	for (iter = map.begin(); iter != map.end(); ++iter) {
+	    dictionary[iter->first] = iter->second;
+	}
+	return dictionary;
+    }
+}
+
 LoginParams::LoginParams()
 {
 }
@@ -315,6 +328,31 @@ double ForexConnectClient::getBalance() const
     return mpAccountRow->getBalance();
 }
 
+std::map<std::string, std::string> ForexConnectClient::getOffers()
+{
+    std::map<std::string, std::string> offers;
+    O2G2Ptr<IO2GTableManager> tableManager = getLoadedTableManager();
+    O2G2Ptr<IO2GOffersTable> offersTable = static_cast<IO2GOffersTable*>(tableManager->getTable(Offers));
+    IO2GOfferTableRow *offerRow = NULL;
+    IO2GTableIterator iterator;
+    while (offersTable->getNextRow(iterator, offerRow))
+    {
+        offers[offerRow->getInstrument()] = offerRow->getOfferID();
+        offerRow->release();
+    }
+    return offers;
+}
+
+boost::python::dict ForexConnectClient::getOffersForPython()
+{
+    return map_to_python_dict(getOffers());
+}
+
+bool ForexConnectClient::isConnected() const
+{
+    return mIsConnected;
+}
+
 std::vector<TradeInfo> ForexConnectClient::getTrades()
 {
     std::vector<TradeInfo> trades;
@@ -352,21 +390,11 @@ bool ForexConnectClient::openPosition(const std::string& instrument,
 	return false;
     }
 
-    O2G2Ptr<IO2GTableManager> tableManager = getLoadedTableManager();
-    O2G2Ptr<IO2GOffersTable> offersTable = static_cast<IO2GOffersTable*>(tableManager->getTable(Offers));
-
-    IO2GOfferTableRow *offerRow = NULL;
-    IO2GTableIterator tableIterator;
-
+    std::map<std::string, std::string> offers = getOffers();
     std::string offerID;
-    while (offersTable->getNextRow(tableIterator, offerRow)) {
-	if (instrument == offerRow->getInstrument()) {
-	    break;
-	}
-    }
-    if (offerRow) {
-	offerID = offerRow->getOfferID();
-	offerRow->release();
+    std::map<std::string, std::string>::const_iterator offer_itr = offers.find(instrument);
+    if (offer_itr != offers.end()) {
+	offerID = offer_itr->second;
     } else {
 	std::cout << "Could not find offer row for instrument " << instrument << std::endl;
 	return false;

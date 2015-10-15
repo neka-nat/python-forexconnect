@@ -47,6 +47,39 @@ std::ostream& pyforexconnect::operator<<(std::ostream& out, TradeInfo const& ti)
     return out;
 }
 
+Prices::Prices()
+    : mDate(boost::posix_time::second_clock::local_time()),
+      mOpen(0.0),
+      mHigh(0.0),
+      mLow(0.0),
+      mClose(0.0)
+{
+}
+
+bool Prices::operator==(const Prices& other)
+{
+    return mDate == other.mDate &&
+	mOpen == other.mOpen &&
+	mHigh == other.mHigh &&
+	mLow == other.mLow &&
+	mClose == other.mClose;
+}
+
+bool Prices::operator!=(const Prices& other)
+{
+    return !(*this == other);
+}
+
+std::ostream& pyforexconnect::operator<<(std::ostream& out, Prices const& pr)
+{
+    out << "date: " << pr.mDate << std::endl
+	<< "open: " << pr.mOpen << std::endl
+	<< "high: " << pr.mHigh << std::endl
+	<< "low: " << pr.mLow << std::endl
+	<< "close: " << pr.mClose << std::endl;
+    return out;
+}
+
 SessionStatusListener::SessionStatusListener(IO2GSession *session,
 					     bool printSubsessions,
 					     const std::string& sessionID,
@@ -292,6 +325,10 @@ std::vector<TradeInfo> ForexConnectClient::getTrades()
     while (tradesTable->getNextRow(tableIterator, tradeRow))
     {
         O2G2Ptr<IO2GOfferRow> offer = getTableRow<IO2GOfferRow, IO2GOffersTableResponseReader>(Offers, tradeRow->getOfferID(), &findOfferRowByOfferId, &getOffersReader);
+	if (!offer)
+	{
+	    throw std::runtime_error("Could not get offer table row.");
+	}
 	TradeInfo trade;
         trade.mInstrument = offer->getInstrument();
 	trade.mTradeID = tradeRow->getTradeID();
@@ -411,6 +448,10 @@ double ForexConnectClient::getBid(const std::string& instrument) {
 											   instrument,
 											   &findOfferRowBySymbol,
 											   &getOffersReader);
+    if (!offer)
+    {
+	throw std::runtime_error("Could not get offer table row.");
+    }
     return offer->getBid();
 }
 
@@ -419,29 +460,33 @@ double ForexConnectClient::getAsk(const std::string& instrument) {
 											   instrument,
 											   &findOfferRowBySymbol,
 											   &getOffersReader);
+    if (!offer)
+    {
+	throw std::runtime_error("Could not get offer table row.");
+    }
     return offer->getAsk();
 }
 
 template <class RowType, class ReaderType>
 RowType* ForexConnectClient::getTableRow(O2GTable table, std::string key, bool (*finderFunc)(RowType *, std::string), ReaderType* (*readerCreateFunc)(IO2GResponseReaderFactory* , IO2GResponse *)) {
 
-    O2G2Ptr<IO2GResponse> response;
+    O2G2Ptr<IO2GResponse> response = NULL;
 
     if(!mpLoginRules->isTableLoadedByDefault(table) ) {
-        IO2GRequest *request = mpRequestFactory->createRefreshTableRequestByAccount(Trades, mAccountID.c_str());
-        if (!response) {
-            throw "No response to manual table refresh request";
+        O2G2Ptr<IO2GRequest> request = mpRequestFactory->createRefreshTableRequestByAccount(Trades, mAccountID.c_str());
+        if (!request) {
+            return NULL;
         }
 	mpResponseListener->setRequestID(request->getRequestID());
 	mpSession->sendRequest(request);
 	if (!mpResponseListener->waitEvents())
 	{
-	    throw "Response waiting timeout expired";
+	    return NULL;
 	}
     } else {
         response = mpLoginRules->getTableRefreshResponse(table);
         if (!response) {
-            throw "No response to automatic table refresh request";
+            return NULL;
         }
     }
 
@@ -457,12 +502,6 @@ RowType* ForexConnectClient::getTableRow(O2GTable table, std::string key, bool (
         row->release();
         row = NULL;
     }
-    if (row == NULL) {
-        std::stringstream ss;
-        ss << "Could not find row for key " << key;
-        throw ss.str().c_str();
-    }
-
     return row;
 }
 

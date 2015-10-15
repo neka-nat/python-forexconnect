@@ -104,8 +104,20 @@ BOOST_PYTHON_MODULE(forexconnect)
 	.def_readwrite("gross_pl", &TradeInfo::mGrossPL)
 	.def(self_ns::str(self));
 
+    class_<Prices>("Prices")
+	.add_property("date",
+		      make_getter(&Prices::mDate, return_value_policy<return_by_value>()),
+		      make_setter(&Prices::mDate, return_value_policy<copy_non_const_reference>()))
+	.def_readwrite("open", &Prices::mOpen)
+	.def_readwrite("high", &Prices::mHigh)
+	.def_readwrite("low", &Prices::mLow)
+	.def_readwrite("close", &Prices::mClose);
+
     class_<std::vector<TradeInfo> >("vector<TradeInfo>")
 	.def(vector_indexing_suite<std::vector<TradeInfo> >());
+
+    class_<std::vector<Prices> >("vector<Prices>")
+	.def(vector_indexing_suite<std::vector<Prices> >());
 
     class_<ForexConnectClient>("ForexConnectClient", init<LoginParams>())
 	.def(init<std::string, std::string, std::string>())

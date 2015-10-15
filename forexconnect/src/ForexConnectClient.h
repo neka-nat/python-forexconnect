@@ -35,6 +35,19 @@ namespace pyforexconnect
     };
     std::ostream& operator<<(std::ostream& out, TradeInfo const& ti);
 
+    struct Prices
+    {
+        boost::posix_time::ptime mDate;
+	double mOpen;
+	double mHigh;
+	double mLow;
+	double mClose;
+	bool operator==(const Prices& other);
+	bool operator!=(const Prices& other);
+	Prices();
+    };
+    std::ostream& operator<<(std::ostream& out, Prices const& pr);
+
     class SessionStatusListener : public IO2GSessionStatus
     {
     public:

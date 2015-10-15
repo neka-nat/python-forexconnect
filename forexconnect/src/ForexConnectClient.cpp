@@ -1,4 +1,5 @@
 #include "ForexConnectClient.h"
+#include <boost/log/trivial.hpp>
 #include <string.h>
 #include <stdexcept>
 using namespace pyforexconnect;
@@ -161,7 +162,7 @@ void SessionStatusListener::reset()
 
 void SessionStatusListener::onLoginFailed(const char *error)
 {
-    std::cout << "Login error: " << error << std::endl;
+    BOOST_LOG_TRIVIAL(error) << "Login error: " << error;
     mError = true;
 }
 
@@ -170,31 +171,31 @@ void SessionStatusListener::onSessionStatusChanged(IO2GSessionStatus::O2GSession
     switch (status)
     {
     case IO2GSessionStatus::Disconnected:
-        std::cout << "status::disconnected" << std::endl;
+        BOOST_LOG_TRIVIAL(info) << "status::disconnected";
         mConnected = false;
         mDisconnected = true;
         SetEvent(mSessionEvent);
         break;
     case IO2GSessionStatus::Connecting:
-        std::cout << "status::connecting" << std::endl;
+        BOOST_LOG_TRIVIAL(info) << "status::connecting";
         break;
     case IO2GSessionStatus::TradingSessionRequested:
     {
-        std::cout << "status::trading session requested" << std::endl;
+        BOOST_LOG_TRIVIAL(info) << "status::trading session requested";
         O2G2Ptr<IO2GSessionDescriptorCollection> descriptors = mSession->getTradingSessionDescriptors();
         bool found = false;
         if (descriptors)
         {
             if (mPrintSubsessions)
-                std::cout << "descriptors available:" << std::endl;
+                BOOST_LOG_TRIVIAL(info) << "descriptors available:";
             for (int i = 0; i < descriptors->size(); ++i)
             {
                 O2G2Ptr<IO2GSessionDescriptor> descriptor = descriptors->get(i);
                 if (mPrintSubsessions)
-                    std::cout << "  id:='" << descriptor->getID()
-                              << "' name='" << descriptor->getName()
-                              << "' description='" << descriptor->getDescription()
-                              << "' " << (descriptor->requiresPin() ? "requires pin" : "") << std::endl;
+                    BOOST_LOG_TRIVIAL(info) << "  id:='" << descriptor->getID()
+					    << "' name='" << descriptor->getName()
+					    << "' description='" << descriptor->getDescription()
+					    << "' " << (descriptor->requiresPin() ? "requires pin" : "");
                 if (mSessionID == descriptor->getID())
                 {
                     found = true;
@@ -213,19 +214,19 @@ void SessionStatusListener::onSessionStatusChanged(IO2GSessionStatus::O2GSession
     }
     break;
     case IO2GSessionStatus::Connected:
-        std::cout << "status::connected" << std::endl;
+        BOOST_LOG_TRIVIAL(info) << "status::connected";
         mConnected = true;
         mDisconnected = false;
         SetEvent(mSessionEvent);
         break;
     case IO2GSessionStatus::Reconnecting:
-        std::cout << "status::reconnecting" << std::endl;
+        BOOST_LOG_TRIVIAL(info) << "status::reconnecting";
         break;
     case IO2GSessionStatus::Disconnecting:
-        std::cout << "status::disconnecting" << std::endl;
+        BOOST_LOG_TRIVIAL(info) << "status::disconnecting";
         break;
     case IO2GSessionStatus::SessionLost:
-        std::cout << "status::session lost" << std::endl;
+        BOOST_LOG_TRIVIAL(info) << "status::session lost";
         break;
     }
 }
@@ -433,7 +434,7 @@ bool ForexConnectClient::openPosition(const std::string& instrument,
     if (offer_itr != offers.end()) {
 	offerID = offer_itr->second;
     } else {
-	std::cout << "Could not find offer row for instrument " << instrument << std::endl;
+	BOOST_LOG_TRIVIAL(error) << "Could not find offer row for instrument " << instrument;
 	return false;
     }
     O2G2Ptr<IO2GTradingSettingsProvider> tradingSettingsProvider = mpLoginRules->getTradingSettingsProvider();
@@ -450,7 +451,7 @@ bool ForexConnectClient::openPosition(const std::string& instrument,
     O2G2Ptr<IO2GRequest> request = mpRequestFactory->createOrderRequest(valuemap);
     if (!request)
     {
-        std::cout << mpRequestFactory->getLastError() << std::endl;
+        BOOST_LOG_TRIVIAL(error) << mpRequestFactory->getLastError();
         return false;
     }
     mpResponseListener->setRequestID(request->getRequestID());
@@ -458,10 +459,10 @@ bool ForexConnectClient::openPosition(const std::string& instrument,
     if (mpResponseListener->waitEvents())
     {
 	Sleep(1000); // Wait for the balance update
-	std::cout << "Done!" << std::endl;
+	BOOST_LOG_TRIVIAL(info) << "Done!";
 	return true;
     }
-    std::cout << "Response waiting timeout expired" << std::endl;
+    BOOST_LOG_TRIVIAL(error) << "Response waiting timeout expired";
     return false;
 }
 
@@ -477,7 +478,7 @@ bool ForexConnectClient::closePosition(const std::string& tradeID)
 	}
     }
     if (!tradeRow) {
-	std::cout << "Could not find trade with ID = " << tradeID << std::endl;
+	BOOST_LOG_TRIVIAL(error) << "Could not find trade with ID = " << tradeID;
         return false;
     }
     O2G2Ptr<IO2GValueMap> valuemap = mpRequestFactory->createValueMap();
@@ -493,7 +494,7 @@ bool ForexConnectClient::closePosition(const std::string& tradeID)
     O2G2Ptr<IO2GRequest> request = mpRequestFactory->createOrderRequest(valuemap);
     if (!request)
     {
-        std::cout << mpRequestFactory->getLastError() << std::endl;
+        BOOST_LOG_TRIVIAL(error) << mpRequestFactory->getLastError();
         return false;
     }
     mpResponseListener->setRequestID(request->getRequestID());
@@ -501,10 +502,10 @@ bool ForexConnectClient::closePosition(const std::string& tradeID)
     if (mpResponseListener->waitEvents())
     {
 	Sleep(1000); // Wait for the balance update
-	std::cout << "Done!" << std::endl;
+	BOOST_LOG_TRIVIAL(info) << "Done!";
 	return true;
     }
-    std::cout << "Response waiting timeout expired" << std::endl;
+    BOOST_LOG_TRIVIAL(error) << "Response waiting timeout expired";
     return false;
 }
 
@@ -542,7 +543,7 @@ std::vector<Prices> ForexConnectClient::getHistoricalPrices(const std::string& i
     O2G2Ptr<IO2GTimeframe> timeframe = timeframeCollection->get(timeFrame.c_str());
     if (!timeframe)
     {
-        std::cout << "Timeframe '" << timeFrame << "' is incorrect!" << std::endl;
+        BOOST_LOG_TRIVIAL(error) << "Timeframe '" << timeFrame << "' is incorrect!";
         return prices;
     }
     O2G2Ptr<IO2GRequest> request = mpRequestFactory->createMarketDataSnapshotRequestInstrument(instrument.c_str(),
@@ -558,7 +559,7 @@ std::vector<Prices> ForexConnectClient::getHistoricalPrices(const std::string& i
         mpSession->sendRequest(request);
         if (!mpResponseListener->waitEvents())
         {
-            std::cout << "Response waiting timeout expired" << std::endl;
+            BOOST_LOG_TRIVIAL(error) << "Response waiting timeout expired";
             return prices;
         }
         // shift "to" bound to oldest datetime of returned data
@@ -575,7 +576,7 @@ std::vector<Prices> ForexConnectClient::getHistoricalPrices(const std::string& i
 	    }
 	    else
 	    {
-		std::cout << "0 rows received" << std::endl;
+		BOOST_LOG_TRIVIAL(warning) << "0 rows received";
 		break;
 	    }
 	    std::vector<Prices> prc = getPricesFromResponse(response);
@@ -596,7 +597,7 @@ std::vector<Prices> ForexConnectClient::getPricesFromResponse(IO2GResponse* resp
     {
 	return prices;
     }
-    std::cout << "Request with RequestID='" << response->getRequestID() << "' is completed:" << std::endl;
+    BOOST_LOG_TRIVIAL(debug) << "Request with RequestID='" << response->getRequestID() << "' is completed:";
     O2G2Ptr<IO2GMarketDataSnapshotResponseReader> reader = mpResponseReaderFactory->createMarketDataSnapshotReader(response);
     if (!reader)
     {

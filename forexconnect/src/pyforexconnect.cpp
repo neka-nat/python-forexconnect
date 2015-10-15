@@ -90,7 +90,8 @@ BOOST_PYTHON_MODULE(forexconnect)
 	.def(init<std::string, std::string, std::string>())
 	.def_readwrite("login", &LoginParams::mLogin)
 	.def_readwrite("password", &LoginParams::mPassword)
-	.def_readwrite("connection", &LoginParams::mConnection);
+	.def_readwrite("connection", &LoginParams::mConnection)
+	.def(self_ns::str(self));
 
     class_<TradeInfo>("TradeInfo")
 	.def_readwrite("instrument", &TradeInfo::mInstrument)
@@ -111,7 +112,8 @@ BOOST_PYTHON_MODULE(forexconnect)
 	.def_readwrite("open", &Prices::mOpen)
 	.def_readwrite("high", &Prices::mHigh)
 	.def_readwrite("low", &Prices::mLow)
-	.def_readwrite("close", &Prices::mClose);
+	.def_readwrite("close", &Prices::mClose)
+	.def(self_ns::str(self));
 
     class_<std::vector<TradeInfo> >("TradeInfoList")
 	.def(vector_indexing_suite<std::vector<TradeInfo> >());

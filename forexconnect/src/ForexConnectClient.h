@@ -20,6 +20,7 @@ namespace pyforexconnect
 		    const std::string& password,
 		    const std::string& connection);
     };
+    std::ostream& operator<<(std::ostream& out, LoginParams const& lp);
 
     struct TradeInfo
     {

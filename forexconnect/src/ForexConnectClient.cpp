@@ -32,6 +32,14 @@ LoginParams::LoginParams(const std::string& login,
 {
 }
 
+std::ostream& pyforexconnect::operator<<(std::ostream& out, LoginParams const& lp)
+{
+    out << "login: " << lp.mLogin << std::endl
+	<< "password: " << lp.mPassword << std::endl
+	<< "connection: " << lp.mConnection;
+    return out;
+}
+
 TradeInfo::TradeInfo()
     : mOpenRate(0.0),
       mOpenDate(boost::posix_time::second_clock::local_time()),

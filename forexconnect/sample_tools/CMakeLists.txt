@@ -78,3 +78,4 @@ elseif (${CMAKE_SYSTEM} MATCHES "Darwin")
     )
 endif ()
 
+install(TARGETS ${PROJECT} LIBRARY DESTINATION ${INSTALL_DIR})

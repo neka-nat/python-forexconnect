@@ -11,5 +11,9 @@ include_directories(${Boost_INCLUDE_DIRS}
   ${FOREXCONNECT_INCLUDE_DIR}
   ${SAMPLE_TOOLS_DIR}/include)   
 
+execute_process (
+  COMMAND python -c "import site; print(site.getsitepackages()[0])"
+  OUTPUT_VARIABLE INSTALL_DIR OUTPUT_STRIP_TRAILING_WHITESPACE)
+
 add_subdirectory(${SAMPLE_TOOLS_DIR})
 add_subdirectory(forexconnect)

@@ -78,6 +78,9 @@ struct ptime_from_python_datetime
      }
 };
 
+BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(getHistoricalPricesForPythonOverloads,
+				       ForexConnectClient::getHistoricalPricesForPython, 3, 4);
+
 BOOST_PYTHON_MODULE(forexconnect)
 {
     using namespace boost::python;
@@ -85,6 +88,12 @@ BOOST_PYTHON_MODULE(forexconnect)
 
     ptime_from_python_datetime();
     to_python_converter<const boost::posix_time::ptime, ptime_to_python_datetime>();
+
+    boost::python::scope().attr("TF_m1") = std::string("m1");
+    boost::python::scope().attr("TF_m5") = std::string("m5");
+    boost::python::scope().attr("TF_H1") = std::string("H1");
+    boost::python::scope().attr("TF_D1") = std::string("D1");
+    boost::python::scope().attr("TF_W1") = std::string("W1");
 
     class_<LoginParams>("LoginParams")
 	.def(init<std::string, std::string, std::string>())
@@ -127,7 +136,9 @@ BOOST_PYTHON_MODULE(forexconnect)
 	.def("close_position", &ForexConnectClient::closePosition)
 	.def("get_bid", &ForexConnectClient::getBid)
 	.def("get_ask", &ForexConnectClient::getAsk)
-	.def("get_historical_prices", &ForexConnectClient::getHistoricalPricesForPython)
+	.def("get_historical_prices",
+	     &ForexConnectClient::getHistoricalPricesForPython,
+	     getHistoricalPricesForPythonOverloads())
 	.def("login", &ForexConnectClient::login)
 	.def("logout", &ForexConnectClient::logout)
 	.def("get_account_id", &ForexConnectClient::getAccountID)

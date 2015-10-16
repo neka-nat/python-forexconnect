@@ -4,6 +4,7 @@
 #include "stdafx.h"
 #include "ResponseListener.h"
 #include <boost/date_time/posix_time/posix_time.hpp>
+#include <boost/python/list.hpp>
 #include <boost/python/dict.hpp>
 #include <sstream>
 #include <iomanip>
@@ -94,7 +95,8 @@ namespace pyforexconnect
 			   const std::string& connection);
 	ForexConnectClient(const LoginParams& loginParams);
 	~ForexConnectClient();
-	std::vector<TradeInfo> getTrades(); 
+	std::vector<TradeInfo> getTrades();
+	boost::python::list getTradesForPython();
 	bool openPosition(const std::string& instrument,
 			  const std::string& buysell,
 			  int amount);
@@ -105,6 +107,10 @@ namespace pyforexconnect
 						const boost::posix_time::ptime& from,
 						const boost::posix_time::ptime& to,
 						const std::string& timeFrame);
+	boost::python::list getHistoricalPricesForPython(const std::string& instrument,
+							 const boost::posix_time::ptime& from,
+							 const boost::posix_time::ptime& to,
+							 const std::string& timeFrame);
 	std::string getAccountID() const;
 	double getUsedMargin() const;
 	double getBalance() const;

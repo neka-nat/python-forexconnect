@@ -115,22 +115,16 @@ BOOST_PYTHON_MODULE(forexconnect)
 	.def_readwrite("close", &Prices::mClose)
 	.def(self_ns::str(self));
 
-    class_<std::vector<TradeInfo> >("TradeInfoList")
-	.def(vector_indexing_suite<std::vector<TradeInfo> >());
-
-    class_<std::vector<Prices> >("PricesList")
-	.def(vector_indexing_suite<std::vector<Prices> >());
-
     class_<ForexConnectClient>("ForexConnectClient", init<LoginParams>())
 	.def(init<std::string, std::string, std::string>())
-	.def("get_trades", &ForexConnectClient::getTrades)
+	.def("get_trades", &ForexConnectClient::getTradesForPython)
 	.def("get_offers", &ForexConnectClient::getOffersForPython)
 	.def("is_connected", &ForexConnectClient::isConnected)
 	.def("open_position", &ForexConnectClient::openPosition)
 	.def("close_position", &ForexConnectClient::closePosition)
 	.def("get_bid", &ForexConnectClient::getBid)
 	.def("get_ask", &ForexConnectClient::getAsk)
-	.def("get_historical_prices", &ForexConnectClient::getHistoricalPrices)
+	.def("get_historical_prices", &ForexConnectClient::getHistoricalPricesForPython)
 	.def("login", &ForexConnectClient::login)
 	.def("logout", &ForexConnectClient::logout)
 	.def("get_account_id", &ForexConnectClient::getAccountID)

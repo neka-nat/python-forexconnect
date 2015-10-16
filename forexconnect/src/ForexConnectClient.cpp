@@ -8,6 +8,16 @@ static std::string FOREX_URL = "http://www40.fxcorporate.com/Hosts.jsp";
 
 namespace
 {
+    template <class T>
+    boost::python::list vector_to_python_list(const std::vector<T>& vector) {
+	typename std::vector<T>::const_iterator iter;
+	boost::python::list list;
+	for (iter = vector.begin(); iter != vector.end(); ++iter) {
+	    list.append(*iter);
+	}
+	return list;
+    }
+
     template <class K, class V>
     boost::python::dict map_to_python_dict(const std::map<K, V>& map) {
 	typename std::map<K, V>::const_iterator iter;
@@ -291,6 +301,7 @@ ForexConnectClient::~ForexConnectClient()
 {
     mpRequestFactory->release();
     mpAccountRow->release();
+    mpLoginRules->release();
     mpResponseReaderFactory->release();
     mpSession->unsubscribeResponse(mpResponseListener);
     mpResponseListener->release();
@@ -425,6 +436,11 @@ std::vector<TradeInfo> ForexConnectClient::getTrades()
         tradeRow->release();
     }
     return trades;
+}
+
+boost::python::list ForexConnectClient::getTradesForPython()
+{
+    return vector_to_python_list(getTrades());
 }
 
 bool ForexConnectClient::openPosition(const std::string& instrument,
@@ -598,6 +614,17 @@ std::vector<Prices> ForexConnectClient::getHistoricalPrices(const std::string& i
     return prices;
 }
 
+boost::python::list ForexConnectClient::getHistoricalPricesForPython(const std::string& instrument,
+								     const boost::posix_time::ptime& from,
+								     const boost::posix_time::ptime& to,
+								     const std::string& timeFrame)
+{
+    return vector_to_python_list(getHistoricalPrices(instrument,
+						     from,
+						     to,
+						     timeFrame));
+}
+
 std::vector<Prices> ForexConnectClient::getPricesFromResponse(IO2GResponse* response)
 {
     std::vector<Prices> prices;
@@ -671,7 +698,7 @@ RowType* ForexConnectClient::getTableRow(O2GTable table, std::string key, bool (
 
 IO2GTableManager* ForexConnectClient::getLoadedTableManager()
 {
-    O2G2Ptr<IO2GTableManager> tableManager = mpSession->getTableManager();
+    IO2GTableManager* tableManager = mpSession->getTableManager();
     O2GTableManagerStatus managerStatus = tableManager->getStatus();
     while (managerStatus == TablesLoading)
     {

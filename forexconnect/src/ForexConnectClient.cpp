@@ -44,9 +44,9 @@ LoginParams::LoginParams(const std::string& login,
 
 std::ostream& pyforexconnect::operator<<(std::ostream& out, LoginParams const& lp)
 {
-    out << "login: " << lp.mLogin << std::endl
-	<< "password: " << lp.mPassword << std::endl
-	<< "connection: " << lp.mConnection;
+    out << "<'login': " << lp.mLogin
+	<< ", 'password': " << lp.mPassword
+	<< ", 'connection': " << lp.mConnection << ">";
     return out;
 }
 
@@ -69,13 +69,13 @@ bool TradeInfo::operator!=(const TradeInfo& other)
 
 std::ostream& pyforexconnect::operator<<(std::ostream& out, TradeInfo const& ti)
 {
-    out << "instrument: " << ti.mInstrument << std::endl
-	<< "trade_id: " << ti.mTradeID << std::endl
-	<< "but_sell: " << ti.mBuySell << std::endl
-	<< "open_rate: " << ti.mOpenRate << std::endl
-	<< "amount: " << ti.mAmount << std::endl
-	<< "open_date: " << ti.mOpenDate << std::endl
-	<< "gross_pl: " << ti.mGrossPL;
+    out << "<'instrument': " << ti.mInstrument
+	<< ", 'trade_id': " << ti.mTradeID
+	<< ", 'but_sell': " << ti.mBuySell
+	<< ", 'open_rate': " << ti.mOpenRate
+	<< ", 'amount': " << ti.mAmount
+	<< ", 'open_date': " << ti.mOpenDate
+	<< ", 'gross_pl': " << ti.mGrossPL << ">";
     return out;
 }
 
@@ -127,11 +127,11 @@ bool Prices::operator!=(const Prices& other)
 
 std::ostream& pyforexconnect::operator<<(std::ostream& out, Prices const& pr)
 {
-    out << "date: " << pr.mDate << std::endl
-	<< "open: " << pr.mOpen << std::endl
-	<< "high: " << pr.mHigh << std::endl
-	<< "low: " << pr.mLow << std::endl
-	<< "close: " << pr.mClose << std::endl;
+    out << "<'date': " << pr.mDate
+	<< ", 'open': " << pr.mOpen
+	<< ", 'high': " << pr.mHigh
+	<< ", 'low': " << pr.mLow
+	<< ", 'close': " << pr.mClose << ">";
     return out;
 }
 

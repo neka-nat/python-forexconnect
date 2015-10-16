@@ -91,7 +91,8 @@ BOOST_PYTHON_MODULE(forexconnect)
 	.def_readwrite("login", &LoginParams::mLogin)
 	.def_readwrite("password", &LoginParams::mPassword)
 	.def_readwrite("connection", &LoginParams::mConnection)
-	.def(self_ns::str(self));
+	.def(self_ns::str(self))
+	.def(self_ns::repr(self));
 
     class_<TradeInfo>("TradeInfo")
 	.def_readwrite("instrument", &TradeInfo::mInstrument)
@@ -103,7 +104,8 @@ BOOST_PYTHON_MODULE(forexconnect)
 		      make_getter(&TradeInfo::mOpenDate, return_value_policy<return_by_value>()),
 		      make_setter(&TradeInfo::mOpenDate, return_value_policy<copy_non_const_reference>()))
 	.def_readwrite("gross_pl", &TradeInfo::mGrossPL)
-	.def(self_ns::str(self));
+	.def(self_ns::str(self))
+	.def(self_ns::repr(self));
 
     class_<Prices>("Prices")
 	.add_property("date",
@@ -113,7 +115,8 @@ BOOST_PYTHON_MODULE(forexconnect)
 	.def_readwrite("high", &Prices::mHigh)
 	.def_readwrite("low", &Prices::mLow)
 	.def_readwrite("close", &Prices::mClose)
-	.def(self_ns::str(self));
+	.def(self_ns::str(self))
+	.def(self_ns::repr(self));
 
     class_<ForexConnectClient>("ForexConnectClient", init<LoginParams>())
 	.def(init<std::string, std::string, std::string>())

@@ -94,6 +94,8 @@ BOOST_PYTHON_MODULE(forexconnect)
     boost::python::scope().attr("TF_H1") = std::string("H1");
     boost::python::scope().attr("TF_D1") = std::string("D1");
     boost::python::scope().attr("TF_W1") = std::string("W1");
+    boost::python::scope().attr("BUY") = std::string(O2G2::Buy);
+    boost::python::scope().attr("SELL") = std::string(O2G2::Sell);
 
     class_<LoginParams>("LoginParams")
 	.def(init<std::string, std::string, std::string>())
@@ -132,7 +134,8 @@ BOOST_PYTHON_MODULE(forexconnect)
 	.def("get_trades", &ForexConnectClient::getTradesForPython)
 	.def("get_offers", &ForexConnectClient::getOffersForPython)
 	.def("is_connected", &ForexConnectClient::isConnected)
-	.def("open_position", &ForexConnectClient::openPosition)
+	.def("open_position", &ForexConnectClient::openPosition,
+	     ":param str instrument: type of quotes(ex. 'EUR/USD')\n:param str buysell: buy or sell\n:param int amount: amount of position")
 	.def("close_position", &ForexConnectClient::closePosition)
 	.def("get_bid", &ForexConnectClient::getBid)
 	.def("get_ask", &ForexConnectClient::getAsk)

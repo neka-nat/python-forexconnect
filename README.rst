@@ -3,12 +3,14 @@ python-forexconnect
 
 About
 ------
-This library is a Python binding of Forexconnect API.
+This library is a Python binding of Forexconnect API
+and use boost.python.
 
 Build
 -----
 
-First, set environment "FOREXCONNECT_ROOT" which is the path ForexConnectAPI installed.
+First, download "ForexConnectAPI-1.3.2" from http://www.fxcodebase.com/wiki/index.php/Download
+and set environment "FOREXCONNECT_ROOT" which is the path ForexConnectAPI installed.
 
     $ export FOREXCONNECT_ROOT=/.../ForexConnectAPI
 
@@ -26,9 +28,8 @@ Build and install.
 
     $ cmake ..
 
-    $ make
-
     $ make install
+
 
 Usage
 ------

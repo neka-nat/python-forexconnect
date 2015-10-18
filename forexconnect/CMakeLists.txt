@@ -10,4 +10,4 @@ target_link_libraries(forexconnect
   ${PYTHON_LIBLARY})
 set_target_properties(forexconnect PROPERTIES PREFIX "")
 
-install(TARGETS forexconnect LIBRARY DESTINATION ${INSTALL_DIR})
+install(TARGETS forexconnect LIBRARY DESTINATION ${INSTALL_PYTHON_PKG_DIR})

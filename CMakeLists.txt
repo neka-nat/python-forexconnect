@@ -13,7 +13,12 @@ include_directories(${Boost_INCLUDE_DIRS}
 
 execute_process (
   COMMAND python -c "import site; print(site.getsitepackages()[0])"
-  OUTPUT_VARIABLE INSTALL_DIR OUTPUT_STRIP_TRAILING_WHITESPACE)
+  OUTPUT_VARIABLE INSTALL_PYTHON_PKG_DIR OUTPUT_STRIP_TRAILING_WHITESPACE)
+
+set(INSTALL_TARGETS_DEFAULT_ARGS
+  RUNTIME DESTINATION bin
+  LIBRARY DESTINATION lib
+  ARCHIVE DESTINATION lib)
 
 add_subdirectory(${SAMPLE_TOOLS_DIR})
 add_subdirectory(forexconnect)

@@ -122,8 +122,6 @@ namespace pyforexconnect
     private:
 	void init();
 	IO2GTableManager* getLoadedTableManager();
-        template <class RowType, class ReaderType>
-            RowType* getTableRow(O2GTable, std::string, bool (*finderFunc)(RowType *, std::string), ReaderType* (*readerCreateFunc)(IO2GResponseReaderFactory* , IO2GResponse *));
 	std::vector<Prices> getPricesFromResponse(IO2GResponse* response);
 	LoginParams mLoginParams;
 	IO2GSession* mpSession;

@@ -4,7 +4,7 @@ python-forexconnect
 About
 ------
 This library is a Python binding of Forexconnect API
-and use boost.python.
+using boost.python.
 
 Build
 -----
@@ -43,7 +43,7 @@ Finally, close the opened position and logout.
 
    >> import forexconnect
    >> cl = forexconnect.ForexConnectClient("usrname", "pass", "Real")
-   >> cl.open_position("EUR/JPY", "B", 1)
+   >> cl.open_position("EUR/JPY", forexconnect.BUY, 1)
    >> ti = cl.get_trades()
    >> cl.close_position(ti[0].trade_id)
    >> cl.logout()

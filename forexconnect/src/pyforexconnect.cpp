@@ -78,6 +78,54 @@ struct ptime_from_python_datetime
      }
 };
 
+struct prices_pickle_suite : boost::python::pickle_suite
+{
+    static boost::python::tuple getinitargs(const Prices& p)
+    {
+        return boost::python::make_tuple(p.mDate,
+					 p.mOpen,
+					 p.mHigh,
+					 p.mLow,
+					 p.mClose);
+    }
+
+    static boost::python::tuple getstate(boost::python::object obj)
+    {
+        Prices const& p = boost::python::extract<Prices const&>(obj)();
+        return boost::python::make_tuple(obj.attr("__dict__"),
+					 p.mDate,
+					 p.mOpen,
+					 p.mHigh,
+					 p.mLow,
+					 p.mClose);
+    }
+
+    static void setstate(boost::python::object obj, boost::python::tuple state)
+    {
+        using namespace boost::python;
+	Prices& p = extract<Prices&>(obj)();
+
+        if (len(state) != 6)
+        {
+	    PyErr_SetObject(PyExc_ValueError,
+			    ("expected 6-item tuple in call to __setstate__; got %s"
+			     % state).ptr()
+		);
+	    throw_error_already_set();
+        }
+        // restore the object's __dict__
+        dict d = extract<dict>(obj.attr("__dict__"))();
+        d.update(state[0]);
+	p.mDate = extract<boost::posix_time::ptime>(state[1]);
+	p.mOpen = extract<double>(state[2]);
+	p.mHigh = extract<double>(state[3]);
+	p.mLow = extract<double>(state[4]);
+	p.mClose = extract<double>(state[5]);
+    }
+
+    static bool getstate_manages_dict() {return true;}
+};
+
 BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(getHistoricalPricesForPythonOverloads,
 				       ForexConnectClient::getHistoricalPricesForPython, 3, 4);
 
@@ -89,13 +137,13 @@ BOOST_PYTHON_MODULE(forexconnect)
     ptime_from_python_datetime();
     to_python_converter<const boost::posix_time::ptime, ptime_to_python_datetime>();
 
-    boost::python::scope().attr("TF_m1") = std::string("m1");
-    boost::python::scope().attr("TF_m5") = std::string("m5");
-    boost::python::scope().attr("TF_H1") = std::string("H1");
-    boost::python::scope().attr("TF_D1") = std::string("D1");
-    boost::python::scope().attr("TF_W1") = std::string("W1");
-    boost::python::scope().attr("BUY") = std::string(O2G2::Buy);
-    boost::python::scope().attr("SELL") = std::string(O2G2::Sell);
+    scope().attr("TF_m1") = std::string("m1");
+    scope().attr("TF_m5") = std::string("m5");
+    scope().attr("TF_H1") = std::string("H1");
+    scope().attr("TF_D1") = std::string("D1");
+    scope().attr("TF_W1") = std::string("W1");
+    scope().attr("BUY") = std::string(O2G2::Buy);
+    scope().attr("SELL") = std::string(O2G2::Sell);
 
     class_<LoginParams>("LoginParams")
 	.def(init<std::string, std::string, std::string>())
@@ -119,6 +167,7 @@ BOOST_PYTHON_MODULE(forexconnect)
 	.def(self_ns::repr(self));
 
     class_<Prices>("Prices")
+	.def(init<boost::posix_time::ptime, double, double, double, double>())
 	.add_property("date",
 		      make_getter(&Prices::mDate, return_value_policy<return_by_value>()),
 		      make_setter(&Prices::mDate, return_value_policy<copy_non_const_reference>()))
@@ -127,7 +176,8 @@ BOOST_PYTHON_MODULE(forexconnect)
 	.def_readwrite("low", &Prices::mLow)
 	.def_readwrite("close", &Prices::mClose)
 	.def(self_ns::str(self))
-	.def(self_ns::repr(self));
+	.def(self_ns::repr(self))
+	.def_pickle(prices_pickle_suite());
 
     class_<ForexConnectClient>("ForexConnectClient", init<LoginParams>())
 	.def(init<std::string, std::string, std::string>())

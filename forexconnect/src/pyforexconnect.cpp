@@ -82,22 +82,19 @@ struct prices_pickle_suite : boost::python::pickle_suite
 {
     static boost::python::tuple getinitargs(const Prices& p)
     {
-        return boost::python::make_tuple(p.mDate,
-					 p.mOpen,
-					 p.mHigh,
-					 p.mLow,
-					 p.mClose);
+        return boost::python::make_tuple(p.mDate, p.mOpen, p.mHigh, p.mLow, p.mClose);
     }
 
     static boost::python::tuple getstate(boost::python::object obj)
     {
         Prices const& p = boost::python::extract<Prices const&>(obj)();
-        return boost::python::make_tuple(obj.attr("__dict__"),
-					 p.mDate,
-					 p.mOpen,
-					 p.mHigh,
-					 p.mLow,
-					 p.mClose);
+	boost::python::dict d = boost::python::extract<boost::python::dict>(obj.attr("__dict__"));
+	d["date"] = p.mDate;
+	d["open"] = p.mOpen;
+	d["high"] = p.mHigh;
+	d["low"] = p.mLow;
+	d["close"] = p.mClose;
+        return boost::python::make_tuple(d);
     }
 
     static void setstate(boost::python::object obj, boost::python::tuple state)
@@ -105,22 +102,20 @@ struct prices_pickle_suite : boost::python::pickle_suite
         using namespace boost::python;
 	Prices& p = extract<Prices&>(obj)();
 
-        if (len(state) != 6)
+        if (len(state) != 1)
         {
 	    PyErr_SetObject(PyExc_ValueError,
-			    ("expected 6-item tuple in call to __setstate__; got %s"
+			    ("expected 1-item tuple in call to __setstate__; got %s"
 			     % state).ptr()
 		);
 	    throw_error_already_set();
         }
-        // restore the object's __dict__
-        dict d = extract<dict>(obj.attr("__dict__"))();
-        d.update(state[0]);
-	p.mDate = extract<boost::posix_time::ptime>(state[1]);
-	p.mOpen = extract<double>(state[2]);
-	p.mHigh = extract<double>(state[3]);
-	p.mLow = extract<double>(state[4]);
-	p.mClose = extract<double>(state[5]);
+	dict d = extract<dict>(state[0]);
+	p.mDate = extract<boost::posix_time::ptime>(d["date"]);
+	p.mOpen = extract<double>(d["open"]);
+	p.mHigh = extract<double>(d["high"]);
+	p.mLow = extract<double>(d["low"]);
+	p.mClose = extract<double>(d["close"]);
     }
 
     static bool getstate_manages_dict() {return true;}

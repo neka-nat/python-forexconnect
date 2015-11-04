@@ -4,6 +4,7 @@
 #include "stdafx.h"
 #include "ResponseListener.h"
 #include <boost/date_time/posix_time/posix_time.hpp>
+#include <boost/date_time/c_local_time_adjustor.hpp>
 #include <boost/python/list.hpp>
 #include <boost/python/dict.hpp>
 #include <sstream>
@@ -139,7 +140,7 @@ namespace pyforexconnect
             double d_int, d_frac;
             d_frac = modf(d, &d_int);
             time_t t = time_t(d_int - 25569.0) * 86400 + time_t(floor((d_frac * 86400) + 0.5));
-            return boost::posix_time::from_time_t(t);
+            return boost::date_time::c_local_adjustor<boost::posix_time::ptime>::utc_to_local(boost::posix_time::from_time_t(t));
         }
 
 	static double toOleTime(const boost::posix_time::ptime& t)

@@ -1,3 +1,6 @@
+"""
+An example getting user infomation.
+"""
 import forexconnect
 import getpass
 

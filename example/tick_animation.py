@@ -1,3 +1,6 @@
+"""
+An example plotting time series currency.
+"""
 import sys
 import forexconnect
 import getpass

@@ -1,6 +1,9 @@
 python-forexconnect
 ===================
 
+.. image:: https://travis-ci.org/neka-nat/python-forexconnect.svg?branch=master
+    :target: https://travis-ci.org/neka-nat/python-forexconnect
+
 About
 ------
 This library is a Python binding of Forexconnect API

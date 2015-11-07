@@ -1,0 +1,21 @@
+language: cpp
+os:
+  - linux
+compiler:
+  - gcc
+before_install:
+  - sudo add-apt-repository -y "deb http://archive.ubuntu.com/ubuntu/ trusty main universe"
+  - sudo apt-get update -qq
+install:
+  - sudo apt-get install libboost-log-dev libboost-date-time-dev libboost-python-dev
+  - wget http://fxcodebase.com/bin/forexconnect/1.3.2/ForexConnectAPI-1.3.2-Linux-x86_64.tar.gz
+  - tar xvf ForexConnectAPI-1.3.2-Linux-x86_64.tar.gz
+  - mv ForexConnectAPI-1.3.2-Linux-x86_64 ForexConnectAPI
+  - export FOREXCONNECT_ROOT=$(pwd)/ForexConnectAPI
+before_script:
+  - export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$(pwd)/ForexConnectAPI
+script:
+  - mkdir build
+  - cd build
+  - cmake ..
+  - sudo make install

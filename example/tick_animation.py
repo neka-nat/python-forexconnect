@@ -4,6 +4,7 @@ An example plotting time series currency.
 import sys
 import forexconnect
 import getpass
+import collections
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
@@ -21,12 +22,13 @@ client = forexconnect.ForexConnectClient(username,
                                          connection)
 fig, ax = plt.subplots()
 x = np.arange(0, 100)
-data = [client.get_ask(instrument)] * len(x)
+data = collections.deque(maxlen = len(x))
+data.extend([client.get_ask(instrument)] * len(x))
 line, = ax.plot(x, np.array(data), "r-")
 
 def animate(i):
     global data
-    data = data[1:] + [client.get_ask(instrument)]
+    data.append(client.get_ask(instrument))
     line.set_ydata(np.array(data))
     return line,
 

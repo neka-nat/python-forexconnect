@@ -30,6 +30,8 @@ def animate(i):
     global data
     data.append(client.get_ask(instrument))
     line.set_ydata(np.array(data))
+    ax.relim()
+    ax.autoscale_view()
     return line,
 
 def init():
@@ -37,7 +39,6 @@ def init():
     line.set_ydata(np.ma.array(data, mask=True))
     return line,
 
-plt.ylim(min(data) * 0.999, max(data) * 1.001)
 ani = animation.FuncAnimation(fig, animate, np.arange(0, 100), init_func=init,
-                              interval=200, blit=True)
+                              interval=200)
 plt.show()

@@ -5,8 +5,6 @@
 #include <stdexcept>
 using namespace pyforexconnect;
 
-static std::string FOREX_URL = "http://www40.fxcorporate.com/Hosts.jsp";
-
 namespace
 {
     template <class T>
@@ -36,10 +34,12 @@ LoginParams::LoginParams()
 
 LoginParams::LoginParams(const std::string& login,
 			 const std::string& password,
-			 const std::string& connection)
+			 const std::string& connection,
+			 const std::string& url)
     : mLogin(login),
       mPassword(password),
-      mConnection(connection)
+      mConnection(connection),
+      mUrl(url)
 {
 }
 
@@ -47,7 +47,8 @@ std::ostream& pyforexconnect::operator<<(std::ostream& out, LoginParams const& l
 {
     out << "<'login': " << lp.mLogin
 	<< ", 'password': " << lp.mPassword
-	<< ", 'connection': " << lp.mConnection << ">";
+	<< ", 'connection': " << lp.mConnection
+	<< ", 'url': " << lp.mUrl << ">";
     return out;
 }
 
@@ -272,8 +273,9 @@ bool SessionStatusListener::waitEvents()
 
 ForexConnectClient::ForexConnectClient(const std::string& login,
 				       const std::string& password,
-				       const std::string& connection)
-    : mLoginParams(login, password, connection),
+				       const std::string& connection,
+				       const std::string& url)
+    : mLoginParams(login, password, connection, url),
       mpSession(NULL),
       mpListener(NULL),
       mpResponseListener(NULL),
@@ -357,7 +359,7 @@ bool ForexConnectClient::login()
     mpListener->reset();
     mpSession->login(mLoginParams.mLogin.c_str(),
 		     mLoginParams.mPassword.c_str(),
-		     FOREX_URL.c_str(),
+		     mLoginParams.mUrl.c_str(),
 		     mLoginParams.mConnection.c_str());
     mIsConnected = mpListener->waitEvents() && mpListener->isConnected();
     return mIsConnected;

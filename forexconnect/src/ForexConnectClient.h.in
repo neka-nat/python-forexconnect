@@ -12,15 +12,19 @@
 
 namespace pyforexconnect
 {
+    static std::string DEFAULT_FOREX_URL = "${DEFAULT_FOREX_URL}";
+
     struct LoginParams
     {
 	std::string mLogin;
 	std::string mPassword;
 	std::string mConnection;
+	std::string mUrl;
 	LoginParams();
 	LoginParams(const std::string& login,
 		    const std::string& password,
-		    const std::string& connection);
+		    const std::string& connection,
+		    const std::string& url = DEFAULT_FOREX_URL);
     };
     std::ostream& operator<<(std::ostream& out, LoginParams const& lp);
 
@@ -93,7 +97,8 @@ namespace pyforexconnect
     public:
 	ForexConnectClient(const std::string& login,
 			   const std::string& password,
-			   const std::string& connection);
+			   const std::string& connection,
+			   const std::string& url = DEFAULT_FOREX_URL);
 	ForexConnectClient(const LoginParams& loginParams);
 	~ForexConnectClient();
 	std::vector<TradeInfo> getTrades();
@@ -166,7 +171,7 @@ namespace pyforexconnect
 	{
             return readerFactory->createOffersTableReader(response);
         }
-	
+
         static IO2GTradesTableResponseReader* getTradesReader(IO2GResponseReaderFactory* readerFactory,
 							      IO2GResponse *response)
 	{

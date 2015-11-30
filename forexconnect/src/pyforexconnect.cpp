@@ -142,9 +142,11 @@ BOOST_PYTHON_MODULE(forexconnect)
 
     class_<LoginParams>("LoginParams")
 	.def(init<std::string, std::string, std::string>())
+	.def(init<std::string, std::string, std::string, std::string>())
 	.def_readwrite("login", &LoginParams::mLogin)
 	.def_readwrite("password", &LoginParams::mPassword)
 	.def_readwrite("connection", &LoginParams::mConnection)
+	.def_readwrite("url", &LoginParams::mUrl)
 	.def(self_ns::str(self))
 	.def(self_ns::repr(self));
 
@@ -176,6 +178,7 @@ BOOST_PYTHON_MODULE(forexconnect)
 
     class_<ForexConnectClient>("ForexConnectClient", init<LoginParams>())
 	.def(init<std::string, std::string, std::string>())
+	.def(init<std::string, std::string, std::string, std::string>())
 	.def("get_trades", &ForexConnectClient::getTradesForPython)
 	.def("get_offers", &ForexConnectClient::getOffersForPython)
 	.def("is_connected", &ForexConnectClient::isConnected)

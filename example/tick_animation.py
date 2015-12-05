@@ -3,7 +3,7 @@ An example plotting time series currency.
 """
 import sys
 import forexconnect
-import getpass
+import login_manager
 import collections
 import numpy as np
 import matplotlib.pyplot as plt
@@ -14,9 +14,7 @@ if len(sys.argv) < 2:
     sys.exit()
 
 instrument = sys.argv[1]
-username = raw_input("username: ")
-password = getpass.getpass("password: ")
-connection = raw_input("connection: ")
+username, password, connection = login_manager.get_login_params()
 client = forexconnect.ForexConnectClient(username,
                                          password,
                                          connection)

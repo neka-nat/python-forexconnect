@@ -2,11 +2,9 @@
 An example getting user infomation.
 """
 import forexconnect
-import getpass
+import login_manager
 
-username = raw_input("username: ")
-password = getpass.getpass("password: ")
-connection = raw_input("connection: ")
+username, password, connection = login_manager.get_login_params()
 client = forexconnect.ForexConnectClient(username,
                                          password,
                                          connection)

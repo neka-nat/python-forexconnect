@@ -1,4 +1,3 @@
-import sys
 import collections
 import numpy as np
 import matplotlib.pyplot as plt
@@ -17,10 +16,12 @@ def add_data(name, data):
     datum[name] = collections.deque(maxlen = len(x))
     datum[name].extend(data)
 
-def init():
+def init(title=''):
     global datum, lines
+    plt.title(title)
     for key in datum.keys():
         lines[key], = ax.plot(x, np.array(datum[key]), "-")
+    plt.legend(datum.keys())
     ax.relim()
     ax.autoscale_view()
 

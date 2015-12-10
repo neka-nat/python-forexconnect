@@ -4,7 +4,7 @@ An algorithm trading example using dual moving average.
 import sys
 import forexconnect
 import datetime
-import login_manager
+import lib.login_manager as lm
 import collections
 import numpy as np
 import talib
@@ -72,7 +72,7 @@ if __name__ == '__main__':
         sys.exit()
 
     instrument = sys.argv[1]
-    username, password, connection = login_manager.get_login_params()
+    username, password, connection = lm.get_login_params()
     client = forexconnect.ForexConnectClient(username,
                                              password,
                                              connection)

@@ -4,15 +4,15 @@ An example plotting time series currency.
 import sys
 import time
 import forexconnect
-import login_manager
-import realtime_chart as rc
+import lib.login_manager as lm
+import lib.realtime_chart as rc
 
 if len(sys.argv) < 2:
     print "Usage: python tick_animation.py instrument(etc. 'EUR/USD')"
     sys.exit()
 
 instrument = sys.argv[1]
-username, password, connection = login_manager.get_login_params()
+username, password, connection = lm.get_login_params()
 client = forexconnect.ForexConnectClient(username,
                                          password,
                                          connection)

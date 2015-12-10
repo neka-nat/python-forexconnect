@@ -2,9 +2,9 @@
 An example getting user infomation.
 """
 import forexconnect
-import login_manager
+import lib.login_manager as lm
 
-username, password, connection = login_manager.get_login_params()
+username, password, connection = lm.get_login_params()
 client = forexconnect.ForexConnectClient(username,
                                          password,
                                          connection)

@@ -15,7 +15,7 @@ date,close,high,low,open
 """
 import sys
 import forexconnect
-import login_manager
+import lib.login_manager as lm
 import datetime
 import pandas
 
@@ -25,7 +25,7 @@ if len(sys.argv) < 3:
 
 instrument = sys.argv[1]
 out_file = sys.argv[2]
-username, password, connection = login_manager.get_login_params()
+username, password, connection = lm.get_login_params()
 client = forexconnect.ForexConnectClient(username,
                                          password,
                                          connection)

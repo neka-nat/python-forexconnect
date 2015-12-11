@@ -13,9 +13,13 @@ if len(sys.argv) < 2:
 
 instrument = sys.argv[1]
 username, password, connection = lm.get_login_params()
-client = forexconnect.ForexConnectClient(username,
-                                         password,
-                                         connection)
+try:
+    client = forexconnect.ForexConnectClient(username,
+                                             password,
+                                             connection)
+except:
+    lm.clear_cache()
+    sys.exit()
 rc.add_data(instrument, [client.get_ask(instrument)] * 100)
 rc.init("Real time chart")
 while True:

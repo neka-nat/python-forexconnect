@@ -73,9 +73,13 @@ if __name__ == '__main__':
 
     instrument = sys.argv[1]
     username, password, connection = lm.get_login_params()
-    client = forexconnect.ForexConnectClient(username,
-                                             password,
-                                             connection)
+    try:
+        client = forexconnect.ForexConnectClient(username,
+                                                 password,
+                                                 connection)
+    except:
+        lm.clear_cache()
+        sys.exit()
     scheduler = apsched.Scheduler()
     trader = Trader(client, instrument)
     scheduler.add_interval_job(trader.tick, minutes = 1)

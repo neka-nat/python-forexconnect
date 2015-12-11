@@ -26,9 +26,13 @@ if len(sys.argv) < 3:
 instrument = sys.argv[1]
 out_file = sys.argv[2]
 username, password, connection = lm.get_login_params()
-client = forexconnect.ForexConnectClient(username,
-                                         password,
-                                         connection)
+try:
+    client = forexconnect.ForexConnectClient(username,
+                                             password,
+                                             connection)
+except:
+    lm.clear_cache()
+    sys.exit()
 data = client.get_historical_prices(instrument,
                                     datetime.datetime.now() - datetime.timedelta(days = 7),
                                     datetime.datetime.now())

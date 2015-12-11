@@ -23,5 +23,5 @@ except:
 rc.add_data(instrument, [client.get_ask(instrument)] * 100)
 rc.init("Real time chart")
 while True:
-    rc.update_data(instrument, client.get_ask(instrument))
+    rc.update_data({instrument: client.get_ask(instrument)})
     time.sleep(1)

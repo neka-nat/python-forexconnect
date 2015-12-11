@@ -25,9 +25,10 @@ def init(title=''):
     ax.relim()
     ax.autoscale_view()
 
-def update_data(name, d):
+def update_data(dic):
     global datum, lines
-    datum[name].append(d)
+    for k, v in dic.items():
+        datum[k].append(v)
     for key in datum.keys():
         lines[key].set_ydata(datum[key])
     ax.relim()

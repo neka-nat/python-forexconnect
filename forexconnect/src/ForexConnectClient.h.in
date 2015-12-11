@@ -12,7 +12,7 @@
 
 namespace pyforexconnect
 {
-    static std::string DEFAULT_FOREX_URL = "${DEFAULT_FOREX_URL}";
+    static const std::string DEFAULT_FOREX_URL = "${DEFAULT_FOREX_URL}";
 
     struct LoginParams
     {
@@ -152,7 +152,9 @@ namespace pyforexconnect
 	{
 	    double d;
 	    struct tm ttm = boost::posix_time::to_tm(t);
-	    CO2GDateUtils::CTimeToOleTime(&ttm, &d);
+	    time_t tt = mktime(&ttm);
+	    struct tm gttm = *gmtime(&tt);
+	    CO2GDateUtils::CTimeToOleTime(&gttm, &d);
 	    return d;
 	}
 

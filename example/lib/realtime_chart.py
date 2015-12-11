@@ -25,10 +25,15 @@ def init(title=''):
     ax.relim()
     ax.autoscale_view()
 
-def update_data(dic):
+def update_data(dic, reset=False):
     global datum, lines
     for k, v in dic.items():
-        datum[k].append(v)
+        if isinstance(v, collections.Iterable):
+            if reset:
+                datum[k].clear()
+            datum[k].extend(v)
+        else:
+            datum[k].append(v)
     for key in datum.keys():
         lines[key].set_ydata(datum[key])
     ax.relim()

@@ -5,8 +5,6 @@ from matplotlib.ticker import FormatStrFormatter
 
 fig, ax = plt.subplots()
 ax.yaxis.set_major_formatter(FormatStrFormatter('%.4f'))
-plt.ion()
-plt.show()
 x = np.arange(0, 100)
 datum = {}
 lines = {}
@@ -21,9 +19,10 @@ def init(title=''):
     plt.title(title)
     for key in datum.keys():
         lines[key], = ax.plot(x, np.array(datum[key]), "-")
-    plt.legend(datum.keys())
+    plt.legend(datum.keys(), loc='upper left')
     ax.relim()
     ax.autoscale_view()
+    plt.pause(0.01)
 
 def update_data(dic, reset=False):
     global datum, lines
@@ -38,4 +37,4 @@ def update_data(dic, reset=False):
         lines[key].set_ydata(datum[key])
     ax.relim()
     ax.autoscale_view()
-    plt.draw()
+    plt.pause(0.01)

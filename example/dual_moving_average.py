@@ -5,10 +5,10 @@ import sys
 import forexconnect
 import datetime
 import lib.login_manager as lm
+import lib.realtime_chart as rc
 import collections
 import numpy as np
 import talib
-import signal
 import apscheduler.scheduler as apsched
 
 class Trader:
@@ -19,9 +19,17 @@ class Trader:
         self._data = collections.deque(maxlen = self._DATA_LEN)
         self._held_trade = None
         cur_data = client.get_historical_prices(self._instrument,
-                                                datetime.datetime.now() - datetime.timedelta(minutes=self._DATA_LEN),
+                                                datetime.datetime.now() - datetime.timedelta(minutes=self._DATA_LEN + 1),
                                                 datetime.datetime.now())
         self._data.extend([c.close for c in cur_data[::-1]])
+        short_mavg = talib.SMA(np.array(self._data), timeperiod = 5)
+        long_mavg = talib.SMA(np.array(self._data), timeperiod = 25)
+        short_mavg[np.isnan(short_mavg)] = short_mavg[np.isfinite(short_mavg)][0]
+        long_mavg[np.isnan(long_mavg)] = long_mavg[np.isfinite(long_mavg)][0]
+        rc.add_data("close", self._data)
+        rc.add_data("short_mavg", short_mavg)
+        rc.add_data("long_mavg", long_mavg)
+        rc.init()
 
     def buy(self):
         if (not self._held_trade is None) and self._held_trade.buy_sell == forexconnect.SELL:
@@ -51,8 +59,8 @@ class Trader:
 
     def tick(self):
         self._data.append(self._client.get_ask(self._instrument))
-        short_mavg = talib.SMA(self._data, timeperiod = 5)
-        long_mavg = talib.SMA(self._data, timeperiod = 25)
+        short_mavg = talib.SMA(np.array(self._data), timeperiod = 5)
+        long_mavg = talib.SMA(np.array(self._data), timeperiod = 25)
 
         res = True
         if short_mavg[-2] < long_mavg[-2] and short_mavg[-1] > long_mavg[-1]:
@@ -64,6 +72,12 @@ class Trader:
         if not res:
             print "Fail to operate position."
         print "Balance:", self._client.get_balance()
+
+        short_mavg[np.isnan(short_mavg)] = short_mavg[np.isfinite(short_mavg)][0]
+        long_mavg[np.isnan(long_mavg)] = long_mavg[np.isfinite(long_mavg)][0]
+        rc.update_data({"close": self._data,
+                        "short_mavg": short_mavg,
+                        "long_mavg": long_mavg}, True)
 
 
 if __name__ == '__main__':
@@ -80,13 +94,12 @@ if __name__ == '__main__':
     except:
         lm.clear_cache()
         sys.exit()
-    scheduler = apsched.Scheduler()
+    scheduler = apsched.Scheduler(standalone = True)
     trader = Trader(client, instrument)
     scheduler.add_interval_job(trader.tick, minutes = 1)
     print "Start trading..."
 
     try:
         scheduler.start()
-        signal.pause()
     except (KeyboardInterrupt, SystemExit):
         pass

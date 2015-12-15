@@ -383,9 +383,33 @@ double ForexConnectClient::getUsedMargin() const
     return mpAccountRow->getUsedMargin();
 }
 
-double ForexConnectClient::getBalance() const
+double ForexConnectClient::getBalance()
 {
-    return mpAccountRow->getBalance();
+    O2G2Ptr<IO2GAccountTableRow> account = getAccount();
+    return (!account) ? mpAccountRow->getBalance() : account->getBalance();
+}
+
+IO2GAccountTableRow* ForexConnectClient::getAccount()
+{
+    O2G2Ptr<IO2GTableManager> tableManager = getLoadedTableManager();
+    O2G2Ptr<IO2GAccountsTable> accountsTable = static_cast<IO2GAccountsTable*>(tableManager->getTable(Accounts));
+
+    IO2GAccountTableRow *account = NULL;
+    IO2GTableIterator it;
+    while (accountsTable->getNextRow(it, account))
+    {
+        if (mAccountID.size() == 0 || strcmp(account->getAccountID(), mAccountID.c_str()) == 0)
+	{
+            if (strcmp(account->getMarginCallFlag(), "N") == 0 &&
+                (strcmp(account->getAccountKind(), "32") == 0 ||
+		 strcmp(account->getAccountKind(), "36") == 0))
+	    {
+                return account;
+	    }
+	}
+	account->release();
+    }
+    return NULL;
 }
 
 std::map<std::string, std::string> ForexConnectClient::getOffers()

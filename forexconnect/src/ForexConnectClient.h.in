@@ -119,7 +119,7 @@ namespace pyforexconnect
 							 const std::string& timeFrame = std::string("m1"));
 	std::string getAccountID() const;
 	double getUsedMargin() const;
-	double getBalance() const;
+	double getBalance();
 	std::map<std::string, std::string> getOffers();
 	boost::python::dict getOffersForPython();
 	bool isConnected() const;
@@ -127,6 +127,7 @@ namespace pyforexconnect
 	void logout();
     private:
 	void init();
+	IO2GAccountTableRow* getAccount();
 	IO2GTableManager* getLoadedTableManager();
 	std::vector<Prices> getPricesFromResponse(IO2GResponse* response);
 	LoginParams mLoginParams;

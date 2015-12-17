@@ -3,13 +3,13 @@ An algorithm trading example using dual moving average.
 """
 import sys
 import forexconnect
+import time
 import datetime
 import lib.login_manager as lm
 import lib.realtime_chart as rc
 import collections
 import numpy as np
 import talib
-import apscheduler.scheduler as apsched
 
 class Trader:
     _DATA_LEN = 100
@@ -94,12 +94,12 @@ if __name__ == '__main__':
     except:
         lm.clear_cache()
         sys.exit()
-    scheduler = apsched.Scheduler(standalone = True)
     trader = Trader(client, instrument)
-    scheduler.add_interval_job(trader.tick, minutes = 1)
     print "Start trading..."
 
-    try:
-        scheduler.start()
-    except (KeyboardInterrupt, SystemExit):
-        pass
+    interval_sec = 60.0
+    while True:
+        start = time.time()
+        print datetime.datetime.now()
+        trader.tick()
+        time.sleep(interval_sec - (time.time() - start))

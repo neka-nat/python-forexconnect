@@ -50,3 +50,10 @@ Finally, close the opened position and logout.
    >> ti = cl.get_trades()
    >> cl.close_position(ti[0].trade_id)
    >> cl.logout()
+
+Requirements
+-------------
+
+* boost 1.54
+* cython 0.20
+* ForexConnectAPI 1.3.2

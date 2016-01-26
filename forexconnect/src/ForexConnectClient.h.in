@@ -181,6 +181,8 @@ namespace pyforexconnect
             return readerFactory->createTradesTableReader(response);
         }
     };
+
+    void setLogLevel(int level);
 }
 
 #endif

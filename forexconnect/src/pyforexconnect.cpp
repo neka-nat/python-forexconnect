@@ -1,6 +1,7 @@
 #include "ForexConnectClient.h"
 #include <boost/python.hpp>
 #include <boost/python/suite/indexing/vector_indexing_suite.hpp>
+#include <boost/log/trivial.hpp>
 #include <datetime.h>
 using namespace pyforexconnect;
 
@@ -126,6 +127,7 @@ BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(getHistoricalPricesForPythonOverloads,
 
 BOOST_PYTHON_MODULE(forexconnect)
 {
+    setLogLevel(boost::log::trivial::info);
     using namespace boost::python;
     PyDateTime_IMPORT;
 
@@ -139,6 +141,14 @@ BOOST_PYTHON_MODULE(forexconnect)
     scope().attr("TF_W1") = std::string("W1");
     scope().attr("BUY") = std::string(O2G2::Buy);
     scope().attr("SELL") = std::string(O2G2::Sell);
+
+    scope().attr("LOG_TRACE") = static_cast<int>(boost::log::trivial::trace);
+    scope().attr("LOG_DEBUG") = static_cast<int>(boost::log::trivial::debug);
+    scope().attr("LOG_INFO") = static_cast<int>(boost::log::trivial::info);
+    scope().attr("LOG_WARNING") = static_cast<int>(boost::log::trivial::warning);
+    scope().attr("LOG_ERROR") = static_cast<int>(boost::log::trivial::error);
+    scope().attr("LOG_FATAL") = static_cast<int>(boost::log::trivial::fatal);
+    def("set_log_level", setLogLevel);
 
     class_<LoginParams>("LoginParams")
 	.def(init<std::string, std::string, std::string>())

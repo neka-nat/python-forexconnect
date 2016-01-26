@@ -1,5 +1,7 @@
 #include "ForexConnectClient.h"
+#include <boost/log/core.hpp>
 #include <boost/log/trivial.hpp>
+#include <boost/log/expressions.hpp>
 #include <boost/bind.hpp>
 #include <string.h>
 #include <stdexcept>
@@ -357,6 +359,10 @@ void ForexConnectClient::init()
 bool ForexConnectClient::login()
 {
     mpListener->reset();
+    BOOST_LOG_TRIVIAL(debug) << "user name: " << mLoginParams.mLogin;
+    BOOST_LOG_TRIVIAL(debug) << "password: " << mLoginParams.mPassword;
+    BOOST_LOG_TRIVIAL(debug) << "url: " << mLoginParams.mUrl;
+    BOOST_LOG_TRIVIAL(debug) << "connection: " << mLoginParams.mConnection;
     mpSession->login(mLoginParams.mLogin.c_str(),
 		     mLoginParams.mPassword.c_str(),
 		     mLoginParams.mUrl.c_str(),
@@ -715,4 +721,9 @@ IO2GTableManager* ForexConnectClient::getLoadedTableManager()
 	throw std::runtime_error("Cannot refresh all tables of table manager");
     }
     return tableManager.Detach();
+}
+
+void pyforexconnect::setLogLevel(int level)
+{
+    boost::log::core::get()->set_filter(boost::log::trivial::severity >= static_cast<boost::log::trivial::severity_level>(level));
 }

@@ -164,11 +164,13 @@ SessionStatusListener::~SessionStatusListener()
 
 long SessionStatusListener::addRef()
 {
+    BOOST_LOG_TRIVIAL(trace) << __PRETTY_FUNCTION__;
     return InterlockedIncrement(&mRefCount);
 }
 
 long SessionStatusListener::release()
 {
+    BOOST_LOG_TRIVIAL(trace) << __PRETTY_FUNCTION__;
     long rc = InterlockedDecrement(&mRefCount);
     if (rc == 0)
         delete this;
@@ -177,6 +179,7 @@ long SessionStatusListener::release()
 
 void SessionStatusListener::reset()
 {
+    BOOST_LOG_TRIVIAL(trace) << __PRETTY_FUNCTION__;
     mConnected = false;
     mDisconnected = false;
     mError = false;
@@ -184,12 +187,14 @@ void SessionStatusListener::reset()
 
 void SessionStatusListener::onLoginFailed(const char *error)
 {
+    BOOST_LOG_TRIVIAL(trace) << __PRETTY_FUNCTION__;
     BOOST_LOG_TRIVIAL(error) << "Login error: " << error;
     mError = true;
 }
 
 void SessionStatusListener::onSessionStatusChanged(IO2GSessionStatus::O2GSessionStatus status)
 {
+    BOOST_LOG_TRIVIAL(trace) << __PRETTY_FUNCTION__;
     switch (status)
     {
     case IO2GSessionStatus::Disconnected:
@@ -255,21 +260,25 @@ void SessionStatusListener::onSessionStatusChanged(IO2GSessionStatus::O2GSession
 
 bool SessionStatusListener::hasError() const
 {
+    BOOST_LOG_TRIVIAL(trace) << __PRETTY_FUNCTION__;
     return mError;
 }
 
 bool SessionStatusListener::isConnected() const
 {
+    BOOST_LOG_TRIVIAL(trace) << __PRETTY_FUNCTION__;
     return mConnected;
 }
 
 bool SessionStatusListener::isDisconnected() const
 {
+    BOOST_LOG_TRIVIAL(trace) << __PRETTY_FUNCTION__;
     return mDisconnected;
 }
 
 bool SessionStatusListener::waitEvents()
 {
+    BOOST_LOG_TRIVIAL(trace) << __PRETTY_FUNCTION__;
     return WaitForSingleObject(mSessionEvent, _TIMEOUT) == 0;
 }
 

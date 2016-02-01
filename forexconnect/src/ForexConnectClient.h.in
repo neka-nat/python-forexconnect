@@ -2,6 +2,7 @@
 #define FOREXCONNECTCLIENT_H
 
 #include "stdafx.h"
+#include "SessionStatusListener.h"
 #include "ResponseListener.h"
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/date_time/c_local_time_adjustor.hpp>
@@ -62,35 +63,6 @@ namespace pyforexconnect
 	       double close);
     };
     std::ostream& operator<<(std::ostream& out, Prices const& pr);
-
-    class SessionStatusListener : public IO2GSessionStatus
-    {
-    public:
-	SessionStatusListener(IO2GSession *session,
-			      bool printSubsessions = true,
-			      const std::string& sessionID = "",
-			      const std::string& pin = "");
-	~SessionStatusListener();
-	virtual long addRef();
-	virtual long release();
-	virtual void onLoginFailed(const char *error);
-	virtual void onSessionStatusChanged(IO2GSessionStatus::O2GSessionStatus status);
-	bool hasError() const;
-	bool isConnected() const;
-	bool isDisconnected() const;
-	void reset();
-	bool waitEvents();
-    private:
-	long mRefCount;
-	std::string mSessionID;
-        std::string mPin;
-        bool mError;
-        bool mConnected;
-        bool mDisconnected;
-        bool mPrintSubsessions;
-        IO2GSession* mSession;
-        HANDLE mSessionEvent;
-    };
 
     class ForexConnectClient
     {

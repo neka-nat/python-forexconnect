@@ -13,4 +13,10 @@ target_link_libraries(forexconnect
   ${PYTHON_LIBLARY})
 set_target_properties(forexconnect PROPERTIES PREFIX "")
 
+add_executable(login cpp_sample/Login.cpp src/SessionStatusListener.cpp)
+target_link_libraries(login
+  sample_tools
+  ${FOREXCONNECT_LIBRARIES}
+  ${Boost_LIBRARIES})
+
 install(TARGETS forexconnect LIBRARY DESTINATION ${INSTALL_PYTHON_PKG_DIR})

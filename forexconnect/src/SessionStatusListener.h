@@ -9,7 +9,9 @@ public:
 			  bool printSubsessions = true,
 			  const std::string& sessionID = "",
 			  const std::string& pin = "");
+protected:
     ~SessionStatusListener();
+public:
     virtual long addRef();
     virtual long release();
     virtual void onLoginFailed(const char *error);

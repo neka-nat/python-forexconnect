@@ -29,7 +29,7 @@ Build and install.
 
     $ cd build
 
-    $ cmake ..
+    $ cmake .. -DDEFAULT_FOREX_URL="http://<Your forexconnect URL>"
 
     $ make install
 

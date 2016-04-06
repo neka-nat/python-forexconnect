@@ -12,10 +12,20 @@ using boost.python.
 Build
 -----
 
-First, download "ForexConnectAPI-1.3.2" from http://www.fxcodebase.com/wiki/index.php/Download
+First, install the required packages.
+
+    $ sudo apt-get install build-essential cmake libboost-log-dev libboost-date-time-dev libboost-python-dev
+
+And then, download "ForexConnectAPI-1.3.2" from http://www.fxcodebase.com/wiki/index.php/Download
 and set environment "FOREXCONNECT_ROOT" which is the path ForexConnectAPI installed.
 
-    $ export FOREXCONNECT_ROOT=/.../ForexConnectAPI
+    $ wget http://fxcodebase.com/bin/forexconnect/1.3.2/ForexConnectAPI-1.3.2-Linux-x86_64.tar.gz
+
+    $ tar xvf ForexConnectAPI-1.3.2-Linux-x86_64.tar.gz
+
+    $ export FOREXCONNECT_ROOT=$(pwd)/ForexConnectAPI-1.3.2-Linux-x86_64
+
+    $ export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$(pwd)/ForexConnectAPI-1.3.2-Linux-x86_64/lib
 
 Next, clone this repository.
 

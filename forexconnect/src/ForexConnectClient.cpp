@@ -1,4 +1,5 @@
 #include "ForexConnectClient.h"
+#include "TableHandler.h"
 #include <boost/log/core.hpp>
 #include <boost/log/trivial.hpp>
 #include <boost/log/expressions.hpp>
@@ -52,6 +53,26 @@ std::ostream& pyforexconnect::operator<<(std::ostream& out, LoginParams const& l
 	<< ", 'connection': " << lp.mConnection
 	<< ", 'url': " << lp.mUrl << ">";
     return out;
+}
+
+AccountInfo::AccountInfo()
+    : mBalance(0.0),
+      mUsedMargin(0.0),
+      mUsableMargin(0.0),
+      mBaseUnitSize(0),
+      mEquity(0.0),
+      mGrossPL(0.0)
+{
+}
+
+std::ostream& pyforexconnect::operator<<(std::ostream& out, AccountInfo const& ai)
+{
+    out << "<'balance': " << ai.mBalance
+	<< ", 'used_margin': " << ai.mUsedMargin
+	<< ", 'usable_margin': " << ai.mUsableMargin
+	<< ", 'base_unit_size': " << ai.mBaseUnitSize
+	<< ", 'equity': " << ai.mEquity
+	<< ", 'gross_pl': " << ai.mGrossPL;
 }
 
 TradeInfo::TradeInfo()
@@ -250,51 +271,47 @@ std::string ForexConnectClient::getAccountID() const
     return mpAccountRow->getAccountID();
 }
 
-double ForexConnectClient::getUsedMargin() const
+AccountInfo ForexConnectClient::getAccountInfo()
 {
-    return mpAccountRow->getUsedMargin();
-}
-
-double ForexConnectClient::getBalance()
-{
-    O2G2Ptr<IO2GAccountTableRow> account = getAccount();
-    return (!account) ? mpAccountRow->getBalance() : account->getBalance();
-}
-
-IO2GAccountTableRow* ForexConnectClient::getAccount()
-{
-    O2G2Ptr<IO2GTableManager> tableManager = getLoadedTableManager();
-    O2G2Ptr<IO2GAccountsTable> accountsTable = static_cast<IO2GAccountsTable*>(tableManager->getTable(Accounts));
-
-    IO2GAccountTableRow *account = NULL;
-    IO2GTableIterator it;
-    while (accountsTable->getNextRow(it, account))
+    TableHandler<Accounts, IO2GAccountsTable, IO2GAccountTableRow> handler(mpSession);
+    while (true)
     {
+	IO2GAccountTableRow *account = handler.getNextRow();
+	if (account == NULL)
+	{
+	    throw std::runtime_error("Could not get account table row.");
+	}
         if (mAccountID.size() == 0 || strcmp(account->getAccountID(), mAccountID.c_str()) == 0)
 	{
             if (strcmp(account->getMarginCallFlag(), "N") == 0 &&
                 (strcmp(account->getAccountKind(), "32") == 0 ||
 		 strcmp(account->getAccountKind(), "36") == 0))
 	    {
-                return account;
+		AccountInfo info;
+		info.mBalance = account->getBalance();
+		info.mUsedMargin = account->getUsedMargin();
+		info.mUsableMargin = account->getUsableMargin();
+		info.mBaseUnitSize = account->getBaseUnitSize();
+		info.mEquity = account->getEquity();
+		info.mGrossPL = account->getGrossPL();
+                return info;
 	    }
 	}
-	account->release();
     }
-    return NULL;
 }
 
 std::map<std::string, std::string> ForexConnectClient::getOffers()
 {
     std::map<std::string, std::string> offers;
-    O2G2Ptr<IO2GTableManager> tableManager = getLoadedTableManager();
-    O2G2Ptr<IO2GOffersTable> offersTable = static_cast<IO2GOffersTable*>(tableManager->getTable(Offers));
-    IO2GOfferTableRow *offerRow = NULL;
-    IO2GTableIterator iterator;
-    while (offersTable->getNextRow(iterator, offerRow))
+    TableHandler<Offers, IO2GOffersTable, IO2GOfferTableRow> handler(mpSession);
+    while (true)
     {
+	IO2GOfferTableRow *offerRow = handler.getNextRow();
+	if (offerRow == NULL)
+	{
+	    break;
+	}
         offers[offerRow->getInstrument()] = offerRow->getOfferID();
-        offerRow->release();
     }
     return offers;
 }
@@ -312,13 +329,15 @@ bool ForexConnectClient::isConnected() const
 std::vector<TradeInfo> ForexConnectClient::getTrades()
 {
     std::vector<TradeInfo> trades;
-    O2G2Ptr<IO2GTableManager> tableManager = getLoadedTableManager();
-    O2G2Ptr<IO2GTradesTable> tradesTable = static_cast<IO2GTradesTable*>(tableManager->getTable(Trades));
-    IO2GTradeTableRow* tradeRow = NULL;
-    IO2GTableIterator tableIterator;
+    TableHandler<Trades, IO2GTradesTable, IO2GTradeTableRow> handler(mpSession);
     std::map<std::string, std::string> offers = getOffers();
-    while (tradesTable->getNextRow(tableIterator, tradeRow))
+    while (true)
     {
+	IO2GTradeTableRow* tradeRow = handler.getNextRow();
+	if (tradeRow == NULL)
+	{
+	    break;
+	}
 	TradeInfo trade;
 	const std::map<std::string, std::string>::const_iterator it = std::find_if(offers.begin(),
 										   offers.end(),
@@ -335,7 +354,6 @@ std::vector<TradeInfo> ForexConnectClient::getTrades()
         trade.mOpenDate = toPtime(tradeRow->getOpenTime());
         trade.mGrossPL = tradeRow->getGrossPL();
 	trades.push_back(trade);
-        tradeRow->release();
     }
     return trades;
 }
@@ -394,18 +412,18 @@ bool ForexConnectClient::openPosition(const std::string& instrument,
 
 bool ForexConnectClient::closePosition(const std::string& tradeID)
 {
-    O2G2Ptr<IO2GTableManager> tableManager = getLoadedTableManager();
-    O2G2Ptr<IO2GTradesTable> tradesTable = static_cast<IO2GTradesTable*>(tableManager->getTable(Trades));
+    TableHandler<Trades, IO2GTradesTable, IO2GTradeTableRow> handler(mpSession);
     IO2GTradeTableRow *tradeRow = NULL;
     IO2GTableIterator tableIterator;
-    while (tradesTable->getNextRow(tableIterator, tradeRow)) {
+    while (true) {
+	tradeRow = handler.getNextRow();
+	if (!tradeRow) {
+	    BOOST_LOG_TRIVIAL(error) << "Could not find trade with ID = " << tradeID;
+	    return false;
+	}
 	if (tradeID == tradeRow->getTradeID()) {
 	    break;
 	}
-    }
-    if (!tradeRow) {
-	BOOST_LOG_TRIVIAL(error) << "Could not find trade with ID = " << tradeID;
-        return false;
     }
     O2G2Ptr<IO2GValueMap> valuemap = mpRequestFactory->createValueMap();
     valuemap->setString(Command, O2G2::Commands::CreateOrder);
@@ -414,7 +432,6 @@ bool ForexConnectClient::closePosition(const std::string& tradeID)
     valuemap->setString(OfferID, tradeRow->getOfferID());
     valuemap->setString(TradeID, tradeID.c_str());
     valuemap->setString(BuySell, (strcmp(tradeRow->getBuySell(), O2G2::Buy) == 0) ? O2G2::Sell : O2G2::Buy);
-    tradeRow->release();
     valuemap->setInt(Amount, tradeRow->getAmount());
     valuemap->setString(CustomID, "CloseMarketOrder");
     O2G2Ptr<IO2GRequest> request = mpRequestFactory->createOrderRequest(valuemap);
@@ -436,37 +453,35 @@ bool ForexConnectClient::closePosition(const std::string& tradeID)
 }
 
 double ForexConnectClient::getBid(const std::string& instrument) {
-    O2G2Ptr<IO2GTableManager> tableManager = getLoadedTableManager();
-    O2G2Ptr<IO2GOffersTable> offersTable = static_cast<IO2GOffersTable*>(tableManager->getTable(Offers));
-    IO2GOfferTableRow* offerRow = NULL;
-    IO2GTableIterator iterator;
-    while (offersTable->getNextRow(iterator, offerRow))
+    TableHandler<Offers, IO2GOffersTable, IO2GOfferTableRow> handler(mpSession);
+    while (true)
     {
+	IO2GOfferTableRow* offerRow = handler.getNextRow();
+	if (offerRow == NULL)
+	{
+	    break;
+	}
         if (offerRow->getInstrument() == instrument)
 	{
-	    const double bid = offerRow->getBid();
-	    offerRow->release();
-	    return bid;
+	    return offerRow->getBid();
 	}
-	offerRow->release();
     }
     throw std::runtime_error("Could not get offer table row.");
 }
 
 double ForexConnectClient::getAsk(const std::string& instrument) {
-    O2G2Ptr<IO2GTableManager> tableManager = getLoadedTableManager();
-    O2G2Ptr<IO2GOffersTable> offersTable = static_cast<IO2GOffersTable*>(tableManager->getTable(Offers));
-    IO2GOfferTableRow* offerRow = NULL;
-    IO2GTableIterator iterator;
-    while (offersTable->getNextRow(iterator, offerRow))
+    TableHandler<Offers, IO2GOffersTable, IO2GOfferTableRow> handler(mpSession);
+    while (true)
     {
+	IO2GOfferTableRow* offerRow = handler.getNextRow();
+	if (offerRow == NULL)
+	{
+	    break;
+	}
         if (offerRow->getInstrument() == instrument)
 	{
-	    const double ask = offerRow->getAsk();
-	    offerRow->release();
-	    return ask;
+	    return offerRow->getAsk();
 	}
-	offerRow->release();
     }
     throw std::runtime_error("Could not get offer table row.");
 }
@@ -570,23 +585,6 @@ std::vector<Prices> ForexConnectClient::getPricesFromResponse(IO2GResponse* resp
 	}
     }
     return prices;
-}
-
-IO2GTableManager* ForexConnectClient::getLoadedTableManager()
-{
-    O2G2Ptr<IO2GTableManager> tableManager = mpSession->getTableManager();
-    O2GTableManagerStatus managerStatus = tableManager->getStatus();
-    while (managerStatus == TablesLoading)
-    {
-	Sleep(50);
-	managerStatus = tableManager->getStatus();
-    }
-    
-    if (managerStatus == TablesLoadFailed)
-    {
-	throw std::runtime_error("Cannot refresh all tables of table manager");
-    }
-    return tableManager.Detach();
 }
 
 void pyforexconnect::setLogLevel(int level)

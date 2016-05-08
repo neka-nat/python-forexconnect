@@ -160,6 +160,16 @@ BOOST_PYTHON_MODULE(forexconnect)
 	.def(self_ns::str(self))
 	.def(self_ns::repr(self));
 
+    class_<AccountInfo>("AccountInfo")
+	.def_readwrite("balance", &AccountInfo::mBalance)
+	.def_readwrite("used_margin", &AccountInfo::mUsedMargin)
+	.def_readwrite("usable_margin", &AccountInfo::mUsableMargin)
+	.def_readwrite("base_unit_size", &AccountInfo::mBaseUnitSize)
+	.def_readwrite("equity", &AccountInfo::mEquity)
+	.def_readwrite("gross_pl", &AccountInfo::mGrossPL)
+	.def(self_ns::str(self))
+	.def(self_ns::repr(self));
+
     class_<TradeInfo>("TradeInfo")
 	.def_readwrite("instrument", &TradeInfo::mInstrument)
 	.def_readwrite("trade_id", &TradeInfo::mTradeID)
@@ -204,6 +214,5 @@ BOOST_PYTHON_MODULE(forexconnect)
 	.def("login", &ForexConnectClient::login)
 	.def("logout", &ForexConnectClient::logout)
 	.def("get_account_id", &ForexConnectClient::getAccountID)
-	.def("get_balance", &ForexConnectClient::getBalance)
-	.def("get_used_margin", &ForexConnectClient::getUsedMargin);
+	.def("get_account_info", &ForexConnectClient::getAccountInfo);
 }

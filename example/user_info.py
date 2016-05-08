@@ -13,8 +13,7 @@ try:
 except:
     lm.clear_cache()
     sys.exit()
-print "Balance:", client.get_balance()
-print "UsedMargin:", client.get_used_margin()
+print client.get_account_info()
 trades = client.get_trades()
 for t in trades:
     print t

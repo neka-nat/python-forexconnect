@@ -3,6 +3,7 @@ configure_file(src/ForexConnectClient.h.in ${CMAKE_CURRENT_BINARY_DIR}/src/Forex
 include_directories(src ${CMAKE_CURRENT_BINARY_DIR}/src)
 set(SRCS src/pyforexconnect.cpp
   src/ForexConnectClient.cpp
+  src/TableHandler.cpp
   src/SessionStatusListener.cpp
   src/ResponseListener.cpp)
 add_library(forexconnect SHARED ${SRCS})

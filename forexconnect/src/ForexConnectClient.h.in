@@ -29,6 +29,18 @@ namespace pyforexconnect
     };
     std::ostream& operator<<(std::ostream& out, LoginParams const& lp);
 
+    struct AccountInfo
+    {
+	double mBalance;
+	double mUsedMargin;
+	double mUsableMargin;
+	int mBaseUnitSize;
+	double mEquity;
+	double mGrossPL;
+	AccountInfo();
+    };
+    std::ostream& operator<<(std::ostream& out, AccountInfo const& ai);
+
     struct TradeInfo
     {
         std::string mInstrument;
@@ -90,8 +102,7 @@ namespace pyforexconnect
 							 const boost::posix_time::ptime& to,
 							 const std::string& timeFrame = std::string("m1"));
 	std::string getAccountID() const;
-	double getUsedMargin() const;
-	double getBalance();
+	AccountInfo getAccountInfo();
 	std::map<std::string, std::string> getOffers();
 	boost::python::dict getOffersForPython();
 	bool isConnected() const;
@@ -99,8 +110,6 @@ namespace pyforexconnect
 	void logout();
     private:
 	void init();
-	IO2GAccountTableRow* getAccount();
-	IO2GTableManager* getLoadedTableManager();
 	std::vector<Prices> getPricesFromResponse(IO2GResponse* response);
 	LoginParams mLoginParams;
 	IO2GSession* mpSession;

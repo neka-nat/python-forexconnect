@@ -41,6 +41,11 @@ namespace pyforexconnect
 	    }
 	};
 
+	TableRow* getRow()
+	{
+	    return mpTableRow;
+	}
+
     private:
 	O2G2Ptr<IO2GTableManager> mTableManager;
 	O2G2Ptr<TableClass> mTable;

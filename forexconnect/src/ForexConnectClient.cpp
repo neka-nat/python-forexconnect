@@ -304,13 +304,9 @@ std::map<std::string, std::string> ForexConnectClient::getOffers()
 {
     std::map<std::string, std::string> offers;
     TableHandler<Offers, IO2GOffersTable, IO2GOfferTableRow> handler(mpSession);
-    while (true)
+    while (handler.getNextRow())
     {
-	IO2GOfferTableRow *offerRow = handler.getNextRow();
-	if (offerRow == NULL)
-	{
-	    break;
-	}
+	IO2GOfferTableRow *offerRow = handler.getRow();
         offers[offerRow->getInstrument()] = offerRow->getOfferID();
     }
     return offers;
@@ -331,13 +327,9 @@ std::vector<TradeInfo> ForexConnectClient::getTrades()
     std::vector<TradeInfo> trades;
     TableHandler<Trades, IO2GTradesTable, IO2GTradeTableRow> handler(mpSession);
     std::map<std::string, std::string> offers = getOffers();
-    while (true)
+    while (handler.getNextRow())
     {
-	IO2GTradeTableRow* tradeRow = handler.getNextRow();
-	if (tradeRow == NULL)
-	{
-	    break;
-	}
+	IO2GTradeTableRow* tradeRow = handler.getRow();
 	TradeInfo trade;
 	const std::map<std::string, std::string>::const_iterator it = std::find_if(offers.begin(),
 										   offers.end(),
@@ -454,13 +446,9 @@ bool ForexConnectClient::closePosition(const std::string& tradeID)
 
 double ForexConnectClient::getBid(const std::string& instrument) {
     TableHandler<Offers, IO2GOffersTable, IO2GOfferTableRow> handler(mpSession);
-    while (true)
+    while (handler.getNextRow())
     {
-	IO2GOfferTableRow* offerRow = handler.getNextRow();
-	if (offerRow == NULL)
-	{
-	    break;
-	}
+	IO2GOfferTableRow* offerRow = handler.getRow();
         if (offerRow->getInstrument() == instrument)
 	{
 	    return offerRow->getBid();
@@ -471,13 +459,9 @@ double ForexConnectClient::getBid(const std::string& instrument) {
 
 double ForexConnectClient::getAsk(const std::string& instrument) {
     TableHandler<Offers, IO2GOffersTable, IO2GOfferTableRow> handler(mpSession);
-    while (true)
+    while (handler.getNextRow())
     {
-	IO2GOfferTableRow* offerRow = handler.getNextRow();
-	if (offerRow == NULL)
-	{
-	    break;
-	}
+	IO2GOfferTableRow* offerRow = handler.getRow();
         if (offerRow->getInstrument() == instrument)
 	{
 	    return offerRow->getAsk();

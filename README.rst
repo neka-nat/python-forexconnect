@@ -65,5 +65,4 @@ Requirements
 -------------
 
 * boost 1.54
-* cython 0.20
 * ForexConnectAPI 1.4.1

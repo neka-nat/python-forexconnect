@@ -73,6 +73,7 @@ std::ostream& pyforexconnect::operator<<(std::ostream& out, AccountInfo const& a
 	<< ", 'base_unit_size': " << ai.mBaseUnitSize
 	<< ", 'equity': " << ai.mEquity
 	<< ", 'gross_pl': " << ai.mGrossPL;
+	return out;
 }
 
 TradeInfo::TradeInfo()

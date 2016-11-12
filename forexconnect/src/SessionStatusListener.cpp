@@ -5,6 +5,10 @@
 
 #include "SessionStatusListener.h"
 
+#if defined(_WIN32) || defined(WIN32)
+#define __PRETTY_FUNCTION__ __FUNCTION__
+#endif
+
 SessionStatusListener::SessionStatusListener(IO2GSession *session,
 					     bool printSubsessions,
 					     const std::string& sessionID,

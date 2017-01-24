@@ -40,6 +40,8 @@ Build and install.
     $ cd build
 
     $ cmake .. -DDEFAULT_FOREX_URL="http://<Your forexconnect URL>"
+    
+    example url: "http://www.fxcorporate.com/Hosts.jsp"
 
     $ make install
 

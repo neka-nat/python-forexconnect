@@ -22,10 +22,12 @@ and set environment "FOREXCONNECT_ROOT" which is the path ForexConnectAPI instal
     $ wget http://fxcodebase.com/bin/forexconnect/1.4.1/ForexConnectAPI-1.4.1-Linux-x86_64.tar.gz
 
     $ tar xvf ForexConnectAPI-1.4.1-Linux-x86_64.tar.gz
+    
+    $ mv -R ForexConnectAPI-1.4.1-Linux-x86_64.tar.gz ForexConnectAPI
 
-    $ export FOREXCONNECT_ROOT=$(pwd)/ForexConnectAPI-1.4.1-Linux-x86_64
+    $ export FOREXCONNECT_ROOT=$(pwd)/ForexConnectAPI
 
-    $ export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$(pwd)/ForexConnectAPI-1.4.1-Linux-x86_64/lib
+    $ export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$(pwd)/ForexConnectAPI/lib
 
 Next, clone this repository.
 

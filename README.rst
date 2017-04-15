@@ -45,7 +45,7 @@ Build and install.
     
     example url: "http://www.fxcorporate.com/Hosts.jsp"
 
-    $ make install
+    $ sudo make install
 
 
 Usage

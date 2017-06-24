@@ -31,7 +31,7 @@ and set environment "FOREXCONNECT_ROOT" which is the path ForexConnectAPI instal
 
 Next, clone this repository.
 
-    $ git clone https://github.com/neka-nat/python-forexconnect.git
+    $ git clone https://github.com/JamesKBowler/python-forexconnect.git
 
 Build and install.
 

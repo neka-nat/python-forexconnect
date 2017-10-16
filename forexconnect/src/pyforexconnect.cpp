@@ -230,5 +230,6 @@ BOOST_PYTHON_MODULE(forexconnect)
 	.def("login", &ForexConnectClient::login)
 	.def("logout", &ForexConnectClient::logout)
 	.def("get_account_id", &ForexConnectClient::getAccountID)
-	.def("get_account_info", &ForexConnectClient::getAccountInfo);
+	.def("get_account_info", &ForexConnectClient::getAccountInfo)
+	.def("getLastBarTime", &ForexConnectClient::getLastBarTime);
 }

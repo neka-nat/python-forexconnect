@@ -184,7 +184,7 @@ BOOST_PYTHON_MODULE(forexconnect)
 	.def(self_ns::repr(self));
 
     class_<Prices>("Prices")
-	.def(init<boost::posix_time::ptime, double, double, double, double>())
+	.def(init<boost::posix_time::ptime, double, double, double, double, int>())
 	.add_property("date",
 		      make_getter(&Prices::mDate, return_value_policy<return_by_value>()),
 		      make_setter(&Prices::mDate, return_value_policy<copy_non_const_reference>()))
@@ -192,6 +192,7 @@ BOOST_PYTHON_MODULE(forexconnect)
 	.def_readwrite("high", &Prices::mHigh)
 	.def_readwrite("low", &Prices::mLow)
 	.def_readwrite("close", &Prices::mClose)
+	.def_readwrite("volume", &Prices::mVolume)
 	.def(self_ns::str(self))
 	.def(self_ns::repr(self))
 	.def_pickle(prices_pickle_suite());

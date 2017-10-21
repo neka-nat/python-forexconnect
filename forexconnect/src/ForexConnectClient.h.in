@@ -59,20 +59,30 @@ namespace pyforexconnect
     struct Prices
     {
         boost::posix_time::ptime mDate;
-	double mOpen;
-	double mHigh;
-	double mLow;
-	double mClose;
+	double mAskOpen;
+	double mAskHigh;
+	double mAskLow;
+	double mAskClose;
+	double mBidOpen;
+	double mBidHigh;
+	double mBidLow;
+	double mBidClose;
+	int mVolume;
 	bool operator==(const Prices& other);
 	bool operator!=(const Prices& other);
 	Prices();
 	Prices(boost::posix_time::ptime date,
 	       double value);
 	Prices(boost::posix_time::ptime date,
-	       double open,
-	       double high,
-	       double low,
-	       double close);
+	       double askopen,
+	       double askhigh,
+	       double asklow,
+	       double askclose,
+	       double bidopen,
+	       double bidhigh,
+	       double bidlow,
+	       double bidclose,
+	       int volume);
     };
     std::ostream& operator<<(std::ostream& out, Prices const& pr);
 

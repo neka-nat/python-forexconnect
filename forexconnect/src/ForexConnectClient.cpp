@@ -11,6 +11,11 @@ using namespace pyforexconnect;
 namespace
 {
     template <class T>
+    boost::python::tuple pair_to_python_tuple(const std::pair<T, T>& pair) {
+	return boost::python::make_tuple(pair.first, pair.second);
+    }
+
+    template <class T>
     boost::python::list vector_to_python_list(const std::vector<T>& vector) {
 	typename std::vector<T>::const_iterator iter;
 	boost::python::list list;
@@ -110,7 +115,8 @@ Prices::Prices()
       mOpen(0.0),
       mHigh(0.0),
       mLow(0.0),
-      mClose(0.0)
+      mClose(0.0),
+      mVolume(0)
 {
 }
 
@@ -120,7 +126,8 @@ Prices::Prices(boost::posix_time::ptime date,
       mOpen(value),
       mHigh(value),
       mLow(value),
-      mClose(value)
+      mClose(value),
+      mVolume(0)
 {
 }
 
@@ -128,12 +135,14 @@ Prices::Prices(boost::posix_time::ptime date,
 	       double open,
 	       double high,
 	       double low,
-	       double close)
+	       double close,
+	       int volume)
     : mDate(date),
       mOpen(open),
       mHigh(high),
       mLow(low),
-      mClose(close)
+      mClose(close),
+      mVolume(volume)
 {
 }
 
@@ -143,7 +152,8 @@ bool Prices::operator==(const Prices& other)
 	mOpen == other.mOpen &&
 	mHigh == other.mHigh &&
 	mLow == other.mLow &&
-	mClose == other.mClose;
+	mClose == other.mClose &&
+	mVolume == other.mVolume;
 }
 
 bool Prices::operator!=(const Prices& other)
@@ -157,7 +167,8 @@ std::ostream& pyforexconnect::operator<<(std::ostream& out, Prices const& pr)
 	<< ", 'open': " << pr.mOpen
 	<< ", 'high': " << pr.mHigh
 	<< ", 'low': " << pr.mLow
-	<< ", 'close': " << pr.mClose << ">";
+	<< ", 'close': " << pr.mClose
+	<< ", 'volume': " << pr.mVolume << ">";
     return out;
 }
 
@@ -471,12 +482,12 @@ double ForexConnectClient::getAsk(const std::string& instrument) {
     throw std::runtime_error("Could not get offer table row.");
 }
 
-std::vector<Prices> ForexConnectClient::getHistoricalPrices(const std::string& instrument,
-							    const boost::posix_time::ptime& from,
-							    const boost::posix_time::ptime& to,
-    							    const std::string& timeFrame)
+std::vector<PricesPair> ForexConnectClient::getHistoricalPrices(const std::string& instrument,
+								const boost::posix_time::ptime& from,
+								const boost::posix_time::ptime& to,
+								const std::string& timeFrame)
 {
-    std::vector<Prices> prices;
+    std::vector<PricesPair> prices;
     O2G2Ptr<IO2GTimeframeCollection> timeframeCollection = mpRequestFactory->getTimeFrameCollection();
     O2G2Ptr<IO2GTimeframe> timeframe = timeframeCollection->get(timeFrame.c_str());
     if (!timeframe)
@@ -517,7 +528,7 @@ std::vector<Prices> ForexConnectClient::getHistoricalPrices(const std::string& i
 		BOOST_LOG_TRIVIAL(warning) << "0 rows received";
 		break;
 	    }
-	    std::vector<Prices> prc = getPricesFromResponse(response);
+	    std::vector<PricesPair> prc = getPricesFromResponse(response);
 	    prices.insert(prices.end(), prc.begin(), prc.end());
 	}
 	else
@@ -533,15 +544,21 @@ boost::python::list ForexConnectClient::getHistoricalPricesForPython(const std::
 								     const boost::posix_time::ptime& to,
 								     const std::string& timeFrame)
 {
-    return vector_to_python_list(getHistoricalPrices(instrument,
-						     from,
-						     to,
-						     timeFrame));
+    std::vector<PricesPair> prices = getHistoricalPrices(instrument,
+							 from,
+							 to,
+							 timeFrame);
+    std::vector<boost::python::tuple> tuple_prices;
+    for (std::vector<PricesPair>::const_iterator itr = prices.begin(); itr != prices.end(); ++itr)
+    {
+	tuple_prices.push_back(pair_to_python_tuple(*itr));
+    }
+    return vector_to_python_list(tuple_prices);
 }
 
-std::vector<Prices> ForexConnectClient::getPricesFromResponse(IO2GResponse* response)
+std::vector<PricesPair> ForexConnectClient::getPricesFromResponse(IO2GResponse* response)
 {
-    std::vector<Prices> prices;
+    std::vector<PricesPair> prices;
     if (!response || response->getType() != MarketDataSnapshot)
     {
 	return prices;
@@ -557,16 +574,29 @@ std::vector<Prices> ForexConnectClient::getPricesFromResponse(IO2GResponse* resp
 	DATE dt = reader->getDate(ii);
 	if (reader->isBar())
 	{
-	    prices.push_back(Prices(toPtime(dt),
-				    reader->getAskOpen(ii),
-				    reader->getAskHigh(ii),
-				    reader->getAskLow(ii),
-				    reader->getAskClose(ii)));
+	    PricesPair pp;
+	    pp.first = Prices(toPtime(dt),
+			      reader->getAskOpen(ii),
+			      reader->getAskHigh(ii),
+			      reader->getAskLow(ii),
+			      reader->getAskClose(ii),
+			      reader->getVolume(ii));
+	    pp.second = Prices(toPtime(dt),
+			       reader->getBidOpen(ii),
+			       reader->getBidHigh(ii),
+			       reader->getBidLow(ii),
+			       reader->getBidClose(ii),
+			       reader->getVolume(ii));
+	    prices.push_back(pp);
 	}
 	else
 	{
-	    prices.push_back(Prices(toPtime(dt),
-				    reader->getAsk(ii)));
+	    PricesPair pp;
+	    pp.first = Prices(toPtime(dt),
+			      reader->getAsk(ii));
+	    pp.second = Prices(toPtime(dt),
+			       reader->getBid(ii));
+	    prices.push_back(pp);
 	}
     }
     return prices;

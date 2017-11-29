@@ -485,6 +485,7 @@ double ForexConnectClient::getAsk(const std::string& instrument) {
 std::vector<PricesPair> ForexConnectClient::getHistoricalPrices(const std::string& instrument,
 								const boost::posix_time::ptime& from,
 								const boost::posix_time::ptime& to,
+								boost::posix_time::ptime& lastBarTime,
 								const std::string& timeFrame)
 {
     std::vector<PricesPair> prices;
@@ -521,7 +522,10 @@ std::vector<PricesPair> ForexConnectClient::getHistoricalPrices(const std::strin
 		if (fabs(dtFirst - reader->getDate(0)) > 0.0001)
 		    dtFirst = reader->getDate(0); // earliest datetime of returned data
 		else
+		{
+		    lastBarTime = toPtime(reader->getLastBarTime());
 		    break;
+		}
 	    }
 	    else
 	    {
@@ -539,21 +543,23 @@ std::vector<PricesPair> ForexConnectClient::getHistoricalPrices(const std::strin
     return prices;
 }
 
-boost::python::list ForexConnectClient::getHistoricalPricesForPython(const std::string& instrument,
-								     const boost::posix_time::ptime& from,
-								     const boost::posix_time::ptime& to,
-								     const std::string& timeFrame)
+boost::python::tuple ForexConnectClient::getHistoricalPricesForPython(const std::string& instrument,
+								      const boost::posix_time::ptime& from,
+								      const boost::posix_time::ptime& to,
+								      const std::string& timeFrame)
 {
+    boost::posix_time::ptime last_var_time;
     std::vector<PricesPair> prices = getHistoricalPrices(instrument,
 							 from,
 							 to,
+							 last_var_time,
 							 timeFrame);
     std::vector<boost::python::tuple> tuple_prices;
     for (std::vector<PricesPair>::const_iterator itr = prices.begin(); itr != prices.end(); ++itr)
     {
 	tuple_prices.push_back(pair_to_python_tuple(*itr));
     }
-    return vector_to_python_list(tuple_prices);
+    return boost::python::make_tuple(vector_to_python_list(tuple_prices), last_var_time);
 }
 
 std::vector<PricesPair> ForexConnectClient::getPricesFromResponse(IO2GResponse* response)

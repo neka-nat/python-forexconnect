@@ -33,9 +33,9 @@ try:
 except:
     lm.clear_cache()
     sys.exit()
-data = client.get_historical_prices(instrument,
-                                    datetime.datetime.now() - datetime.timedelta(days = 7),
-                                    datetime.datetime.now())
+data, last_var_time = client.get_historical_prices(instrument,
+                                                   datetime.datetime.now() - datetime.timedelta(days = 7),
+                                                   datetime.datetime.now())
 data = [d[0].__getstate__()[0] for d in data]
 df = pandas.DataFrame.from_records(data, index = "date")
 df.to_csv(out_file)

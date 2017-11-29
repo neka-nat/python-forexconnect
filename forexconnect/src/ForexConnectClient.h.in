@@ -100,11 +100,12 @@ namespace pyforexconnect
 	std::vector<PricesPair> getHistoricalPrices(const std::string& instrument,
 						    const boost::posix_time::ptime& from,
 						    const boost::posix_time::ptime& to,
+						    boost::posix_time::ptime& lastBarTime,
 						    const std::string& timeFrame = std::string("m1"));
-	boost::python::list getHistoricalPricesForPython(const std::string& instrument,
-							 const boost::posix_time::ptime& from,
-							 const boost::posix_time::ptime& to,
-							 const std::string& timeFrame = std::string("m1"));
+	boost::python::tuple getHistoricalPricesForPython(const std::string& instrument,
+							  const boost::posix_time::ptime& from,
+							  const boost::posix_time::ptime& to,
+							  const std::string& timeFrame = std::string("m1"));
 	std::string getAccountID() const;
 	AccountInfo getAccountInfo();
 	std::map<std::string, std::string> getOffers();

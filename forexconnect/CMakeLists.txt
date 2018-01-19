@@ -1,36 +1,27 @@
-cmake_minimum_required(VERSION 2.8)
-set( Boost_DEBUG ON )
-set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
-find_package(Boost 1.6 COMPONENTS log date_time python3 REQUIRED)
-find_package(PythonLibs 3 REQUIRED)
-find_package(ForexConnectAPI REQUIRED)
-set(SAMPLE_TOOLS_DIR "${CMAKE_CURRENT_SOURCE_DIR}/forexconnect/sample_tools")
-add_definitions(-DBOOST_LOG_DYN_LINK)
+set(DEFAULT_FOREX_URL "http://www40.fxcorporate.com/Hosts.jsp" CACHE STRING "Forexconnect url")
+configure_file(src/ForexConnectClient.h.in ${CMAKE_CURRENT_BINARY_DIR}/src/ForexConnectClient.h)
+include_directories(src ${CMAKE_CURRENT_BINARY_DIR}/src)
+set(SRCS
+  src/pyforexconnect.cpp
+  src/ForexConnectClient.cpp
+  src/TableHandler.cpp
+  src/SessionStatusListener.cpp
+  src/ResponseListener.cpp
+)
+add_library(forexconnect SHARED ${SRCS})
+target_link_libraries(forexconnect
+  sample_tools
+  ${FOREXCONNECT_LIBRARIES}
+  ${Boost_LIBRARIES}
+  ${PYTHON_LIBLARY})
+set_target_properties(forexconnect PROPERTIES PREFIX "")
 
-set(Boost_NO_SYSTEM_PATHS TRUE)
-if(Boost_NO_SYSTEM_PATHS)
-    set(BOOST_ROOT "/usr/local/include" )
-    set(BOOST_INCLUDEDIR "/usr/local/include/boost/" )
-    set(BOOST_LIBRARYDIR "/usr/local/include/boost" )
-endif( Boost_NO_SYSTEM_PATHS )
-include_directories(
-  ${Boost_INCLUDE_DIRS}
-  ${PYTHON_INCLUDE_DIR}
-  ${FOREXCONNECT_INCLUDE_DIR}
-  ${SAMPLE_TOOLS_DIR}/include)
+add_executable(login cpp_sample/Login.cpp src/SessionStatusListener.cpp)
+target_link_libraries(login
+  sample_tools
+  ${FOREXCONNECT_LIBRARIES}
+  ${Boost_LIBRARIES})
 
-execute_process (
-  COMMAND python3 -c "import site; print(site.getsitepackages()[0])"
-  OUTPUT_VARIABLE INSTALL_PYTHON_PKG_DIR OUTPUT_STRIP_TRAILING_WHITESPACE)
-
-set(INSTALL_TARGETS_DEFAULT_ARGS
-  RUNTIME DESTINATION bin
-  LIBRARY DESTINATION lib
-  ARCHIVE DESTINATION lib)
-
-if (WIN32)
-  link_directories("${CMAKE_CURRENT_SOURCE_DIR}/forexconnect/sample_tools/lib/Win32")
-else ()
-  add_subdirectory(${SAMPLE_TOOLS_DIR})
-endif ()
-add_subdirectory(forexconnect)
+install(TARGETS forexconnect
+	ARCHIVE DESTINATION ${INSTALL_PYTHON_PKG_DIR}
+	LIBRARY DESTINATION ${INSTALL_PYTHON_PKG_DIR})

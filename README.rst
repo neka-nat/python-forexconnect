@@ -62,5 +62,5 @@ Finally, close the opened position and logout.
 
    >> import forexconnect as fx
    >> client = fx.ForexConnectClient("usrname", "pass", "Real")
-   >> client.get_offers()
-   >> cl.logout()
+   >> offers = client.get_offers()
+   >> client.logout()

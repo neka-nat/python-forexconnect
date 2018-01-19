@@ -6,17 +6,19 @@ python-forexconnect
 
 About
 ------
-This library is a Python binding of Forexconnect API
-using boost.python.
+This library is a Python binding of Forexconnect API using boost.python.
+
+Requirements
+-------------
+
+* Python 3.x
+* boost 1.65
+* ForexConnectAPI 1.4.1
 
 Build
 -----
 
-First, install the required packages.
-
-    $ sudo apt-get install build-essential cmake libboost-log-dev libboost-date-time-dev libboost-python-dev
-
-And then, download "ForexConnectAPI-1.4.1" from http://www.fxcodebase.com/wiki/index.php/Download
+Download "ForexConnectAPI-1.4.1" from http://www.fxcodebase.com/wiki/index.php/Download
 and set environment "FOREXCONNECT_ROOT" which is the path ForexConnectAPI installed.
 
     $ wget http://fxcodebase.com/bin/forexconnect/1.4.1/ForexConnectAPI-1.4.1-Linux-x86_64.tar.gz
@@ -58,15 +60,7 @@ Finally, close the opened position and logout.
 
 ::
 
-   >> import forexconnect
-   >> cl = forexconnect.ForexConnectClient("usrname", "pass", "Real")
-   >> cl.open_position("EUR/JPY", forexconnect.BUY, 1)
-   >> ti = cl.get_trades()
-   >> cl.close_position(ti[0].trade_id)
+   >> import forexconnect as fx
+   >> client = fx.ForexConnectClient("usrname", "pass", "Real")
+   >> client.get_offers()
    >> cl.logout()
-
-Requirements
--------------
-
-* boost 1.54
-* ForexConnectAPI 1.4.1

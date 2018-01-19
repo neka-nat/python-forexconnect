@@ -10,6 +10,7 @@
 #include <boost/python/dict.hpp>
 #include <sstream>
 #include <iomanip>
+#include <stdint.h>
 
 namespace pyforexconnect
 {
@@ -17,163 +18,133 @@ namespace pyforexconnect
 
     struct LoginParams
     {
-	std::string mLogin;
-	std::string mPassword;
-	std::string mConnection;
-	std::string mUrl;
-	LoginParams();
-	LoginParams(const std::string& login,
-		    const std::string& password,
-		    const std::string& connection,
-		    const std::string& url = DEFAULT_FOREX_URL);
+        std::string mLogin;
+        std::string mPassword;
+        std::string mConnection;
+        std::string mUrl;
+        LoginParams();
+        LoginParams(const std::string& login,
+              const std::string& password,
+              const std::string& connection,
+              const std::string& url = DEFAULT_FOREX_URL);
     };
     std::ostream& operator<<(std::ostream& out, LoginParams const& lp);
-
-    struct AccountInfo
-    {
-	double mBalance;
-	double mUsedMargin;
-	double mUsableMargin;
-	int mBaseUnitSize;
-	double mEquity;
-	double mGrossPL;
-	AccountInfo();
-    };
-    std::ostream& operator<<(std::ostream& out, AccountInfo const& ai);
-
-    struct TradeInfo
-    {
-        std::string mInstrument;
-	std::string mTradeID;
-	std::string mBuySell;
-        double mOpenRate;
-        int mAmount;
-        boost::posix_time::ptime mOpenDate;
-        double mGrossPL;
-	bool operator==(const TradeInfo& other);
-	bool operator!=(const TradeInfo& other);
-	TradeInfo();
-    };
-    std::ostream& operator<<(std::ostream& out, TradeInfo const& ti);
 
     struct Prices
     {
         boost::posix_time::ptime mDate;
-	double mAskOpen;
-	double mAskHigh;
-	double mAskLow;
-	double mAskClose;
-	double mBidOpen;
-	double mBidHigh;
-	double mBidLow;
-	double mBidClose;
-	int mVolume;
-	bool operator==(const Prices& other);
-	bool operator!=(const Prices& other);
-	Prices();
-	Prices(boost::posix_time::ptime date,
-	       double value);
-	Prices(boost::posix_time::ptime date,
-	       double askopen,
-	       double askhigh,
-	       double asklow,
-	       double askclose,
-	       double bidopen,
-	       double bidhigh,
-	       double bidlow,
-	       double bidclose,
-	       int volume);
+        double mAskOpen;
+        double mAskHigh;
+        double mAskLow;
+        double mAskClose;
+        double mBidOpen;
+        double mBidHigh;
+        double mBidLow;
+        double mBidClose;
+        int mVolume;
+        bool operator==(const Prices& other);
+        bool operator!=(const Prices& other);
+        Prices();
+        Prices(boost::posix_time::ptime date,
+               double value);
+        Prices(boost::posix_time::ptime date,
+               double askopen,
+               double askhigh,
+               double asklow,
+               double askclose,
+               double bidopen,
+               double bidhigh,
+               double bidlow,
+               double bidclose,
+               int volume);
     };
     std::ostream& operator<<(std::ostream& out, Prices const& pr);
 
     class ForexConnectClient
     {
-    public:
-	ForexConnectClient(const std::string& login,
-			   const std::string& password,
-			   const std::string& connection,
-			   const std::string& url = DEFAULT_FOREX_URL);
-	ForexConnectClient(const LoginParams& loginParams);
-	~ForexConnectClient();
-	std::vector<TradeInfo> getTrades();
-	boost::python::list getTradesForPython();
-	bool openPosition(const std::string& instrument,
-			  const std::string& buysell,
-			  int amount);
-	bool closePosition(const std::string& tradeID);
-	double getBid(const std::string& instrument);
-	double getAsk(const std::string& instrument);
-	std::vector<Prices> getHistoricalPrices(const std::string& instrument,
-						const boost::posix_time::ptime& from,
-						const boost::posix_time::ptime& to,
-						const std::string& timeFrame = std::string("m1"));
-	boost::python::list getHistoricalPricesForPython(const std::string& instrument,
-							 const boost::posix_time::ptime& from,
-							 const boost::posix_time::ptime& to,
-							 const std::string& timeFrame = std::string("m1"));
-	std::string getAccountID() const;
-	AccountInfo getAccountInfo();
-	std::map<std::string, std::string> getOffers();
-	boost::python::dict getOffersForPython();
-	bool isConnected() const;
-	bool login();
-	void logout();
+        public:
+        ForexConnectClient(const std::string& login,
+                           const std::string& password,
+                           const std::string& connection,
+                           const std::string& url = DEFAULT_FOREX_URL);
+        ForexConnectClient(const LoginParams& loginParams);
+        ~ForexConnectClient();
+        
+        double getBid(const std::string& instrument);
+        double getAsk(const std::string& instrument);
+        
+        std::vector<Prices> getHistoricalPrices(const std::string& instrument,
+                                                const boost::posix_time::ptime& from,
+                                                const boost::posix_time::ptime& to,
+                                                const std::string& timeFrame = std::string("m1"));
+        boost::python::list getHistoricalPricesForPython(const std::string& instrument,
+                     const boost::posix_time::ptime& from,
+                     const boost::posix_time::ptime& to,
+                     const std::string& timeFrame = std::string("m1"));
+        std::map<std::string, double> getOffers();
+        std::map<std::string, double> getTime();
+        std::map<std::string, std::string> getMarketStatus();
+        boost::python::dict getOffersForPython();
+        boost::python::dict getMarketStatusForPython();
+        boost::python::dict getTimeForPython();
+        
+        bool isConnected() const;
+        bool login();
+        void logout();
+
     private:
-	void init();
-	std::vector<Prices> getPricesFromResponse(IO2GResponse* response);
-	LoginParams mLoginParams;
-	IO2GSession* mpSession;
-	SessionStatusListener* mpListener;
-        ResponseListener* mpResponseListener;
-        IO2GLoginRules* mpLoginRules;
-        IO2GAccountRow* mpAccountRow;
-        IO2GResponseReaderFactory* mpResponseReaderFactory;
-        IO2GRequestFactory* mpRequestFactory;
-        std::string mAccountID;
-	bool mIsConnected;
+        void init();
+        
+        std::vector<Prices> getPricesFromResponse(IO2GResponse* response);
+        
+        LoginParams mLoginParams;
+        IO2GSession* mpSession;
+        SessionStatusListener* mpListener;
+              ResponseListener* mpResponseListener;
+              IO2GLoginRules* mpLoginRules;
+              IO2GAccountRow* mpAccountRow;
+              IO2GResponseReaderFactory* mpResponseReaderFactory;
+              IO2GRequestFactory* mpRequestFactory;
+              std::string mAccountID;
+        bool mIsConnected;
 
         static boost::posix_time::ptime toPtime(double d)
-	{
+        {
             double d_int, d_frac;
             d_frac = modf(d, &d_int);
             time_t t = time_t(d_int - 25569.0) * 86400 + time_t(floor((d_frac * 86400) + 0.5));
-            return boost::date_time::c_local_adjustor<boost::posix_time::ptime>::utc_to_local(boost::posix_time::from_time_t(t));
+            return boost::posix_time::from_time_t(t);
+
         }
 
-	static double toOleTime(const boost::posix_time::ptime& t)
-	{
-	    double d;
-	    struct tm ttm = boost::posix_time::to_tm(t);
-	    time_t tt = mktime(&ttm);
-	    struct tm gttm = *gmtime(&tt);
-	    CO2GDateUtils::CTimeToOleTime(&gttm, &d);
-	    return d;
-	}
+        static double toOleTime(const boost::posix_time::ptime& t)
+        {
+            double d;
+            struct tm ttm = boost::posix_time::to_tm(t);
+            time_t tt = mktime(&ttm);
+            struct tm gttm = *gmtime(&tt);
+            CO2GDateUtils::CTimeToOleTime(&gttm, &d);
+            return d;
+        }
 
         static bool findOfferRowBySymbol(IO2GOfferRow *row, std::string symbol)
-	{
-            return (symbol == row->getInstrument() && row->getSubscriptionStatus()[0] == 'T');
+        {
+                  return (symbol == row->getInstrument() && row->getSubscriptionStatus()[0] == 'T');
         }
 
         static bool findOfferRowByOfferId(IO2GOfferRow *row, std::string offerId)
-	{
+        {
             return (offerId == row->getOfferID());
         }
 
         static IO2GOffersTableResponseReader* getOffersReader(IO2GResponseReaderFactory* readerFactory,
-							      IO2GResponse *response)
-	{
+                          IO2GResponse *response)
+        {
             return readerFactory->createOffersTableReader(response);
         }
 
-        static IO2GTradesTableResponseReader* getTradesReader(IO2GResponseReaderFactory* readerFactory,
-							      IO2GResponse *response)
-	{
-            return readerFactory->createTradesTableReader(response);
-        }
     };
 
     void setLogLevel(int level);
 }
-
 #endif

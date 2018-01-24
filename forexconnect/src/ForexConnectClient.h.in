@@ -72,20 +72,21 @@ namespace pyforexconnect
         
         double getBid(const std::string& instrument);
         double getAsk(const std::string& instrument);
-        
+        std::string getOfferTradingStatus(const std::string& instrument);
+        double getOfferTime(const std::string& instrument);
         std::vector<Prices> getHistoricalPrices(const std::string& instrument,
-                                                const boost::posix_time::ptime& from,
-                                                const boost::posix_time::ptime& to,
+                                                const double& from,
+                                                const double& to,
                                                 const std::string& timeFrame = std::string("m1"));
         boost::python::list getHistoricalPricesForPython(const std::string& instrument,
-                     const boost::posix_time::ptime& from,
-                     const boost::posix_time::ptime& to,
+                     const double& from,
+                     const double& to,
                      const std::string& timeFrame = std::string("m1"));
-        std::map<std::string, double> getOffers();
+        std::map<std::string, std::string> getOffers();
         std::map<std::string, double> getTime();
-        std::map<std::string, std::string> getMarketStatus();
+        std::map<std::string, std::string> getTradingStatus();
         boost::python::dict getOffersForPython();
-        boost::python::dict getMarketStatusForPython();
+        boost::python::dict getTradingStatusForPython();
         boost::python::dict getTimeForPython();
         
         bool isConnected() const;

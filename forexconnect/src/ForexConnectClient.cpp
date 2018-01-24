@@ -8,6 +8,7 @@
 #include <stdexcept>
 #include <sstream>
 #include <map>
+#include <unistd.h>
 
 using namespace pyforexconnect;
 
@@ -239,8 +240,8 @@ std::ostream& pyforexconnect::operator<<(std::ostream& out, Prices const& pr)
 }
 
 boost::python::list ForexConnectClient::getHistoricalPricesForPython(const std::string& instrument,
-                     const boost::posix_time::ptime& from,
-                     const boost::posix_time::ptime& to,
+                     const double& from,
+                     const double& to,
                      const std::string& timeFrame)
 {
     return vector_to_python_list(getHistoricalPrices(instrument,
@@ -250,8 +251,8 @@ boost::python::list ForexConnectClient::getHistoricalPricesForPython(const std::
 }
 
 std::vector<Prices> ForexConnectClient::getHistoricalPrices(const std::string& instrument,
-                                                            const boost::posix_time::ptime& from,
-                                                            const boost::posix_time::ptime& to,
+                                                            const double& from,
+                                                            const double& to,
                                                             const std::string& timeFrame)
 {
     std::vector<Prices> prices;
@@ -265,9 +266,8 @@ std::vector<Prices> ForexConnectClient::getHistoricalPrices(const std::string& i
     O2G2Ptr<IO2GRequest> request = mpRequestFactory->createMarketDataSnapshotRequestInstrument(instrument.c_str(),
                                                                                                timeframe,
                                                                                                timeframe->getQueryDepth());
-    DATE dtFrom = toOleTime(from);
-    DATE dtFirst = toOleTime(to);
-
+    DATE dtFrom = from;
+    DATE dtFirst = to;
     mpRequestFactory->fillMarketDataSnapshotRequestTime(request, dtFrom, dtFirst, false);
     mpResponseListener->setRequestID(request->getRequestID());
     mpSession->sendRequest(request);
@@ -276,7 +276,6 @@ std::vector<Prices> ForexConnectClient::getHistoricalPrices(const std::string& i
         BOOST_LOG_TRIVIAL(error) << "Response waiting timeout expired";
         return prices;
     }
-    // shift "to" bound to oldest datetime of returned data
     O2G2Ptr<IO2GResponse> response = mpResponseListener->getResponse();
     if (response && response->getType() == MarketDataSnapshot)
     {
@@ -334,14 +333,14 @@ std::vector<Prices> ForexConnectClient::getPricesFromResponse(IO2GResponse* resp
 /////////////////////////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////////////
 
-std::map<std::string, double> ForexConnectClient::getOffers()
+std::map<std::string, std::string> ForexConnectClient::getOffers()
 {
-    std::map<std::string, double> offers;
+    std::map<std::string, std::string> offers;
     TableHandler<Offers, IO2GOffersTable, IO2GOfferTableRow> handler(mpSession);
     while (handler.getNextRow())
 		{
         IO2GOfferTableRow *offerRow = handler.getRow();
-        offers[offerRow->getInstrument()] = offerRow->getTime();
+        offers[offerRow->getInstrument()] = offerRow->getTradingStatus();
     }
     return offers;
 }
@@ -357,6 +356,18 @@ std::map<std::string, double> ForexConnectClient::getTime()
     return offers;
 }
 
+std::map<std::string, std::string> ForexConnectClient::getTradingStatus()
+{
+    std::map<std::string, std::string> offers;
+    TableHandler<Offers, IO2GOffersTable, IO2GOfferTableRow> handler(mpSession);
+    while (handler.getNextRow())
+		{
+        IO2GOfferTableRow *offerRow = handler.getRow();
+        offers[offerRow->getInstrument()] = offerRow->getTradingStatus();
+    }
+    return offers;
+}
+
 boost::python::dict ForexConnectClient::getOffersForPython()
 {
     return map_to_python_dict(getOffers());
@@ -365,10 +376,41 @@ boost::python::dict ForexConnectClient::getTimeForPython()
 {
     return map_to_python_dict(getTime());
 }
+boost::python::dict ForexConnectClient::getTradingStatusForPython()
+{
+    return map_to_python_dict(getTradingStatus());
+}
 /////////////////////////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////////////
+std::string ForexConnectClient::getOfferTradingStatus(const std::string& instrument) 
+{
+    TableHandler<Offers, IO2GOffersTable, IO2GOfferTableRow> handler(mpSession);
+    while (handler.getNextRow())
+    {
+				IO2GOfferTableRow* offerRow = handler.getRow();
+        if (offerRow->getInstrument() == instrument)
+				{
+	    			return offerRow->getTradingStatus();
+				}
+    }
+    return "U";
+}
+
+double ForexConnectClient::getOfferTime(const std::string& instrument) 
+{
+    TableHandler<Offers, IO2GOffersTable, IO2GOfferTableRow> handler(mpSession);
+    while (handler.getNextRow())
+    {
+				IO2GOfferTableRow* offerRow = handler.getRow();
+        if (offerRow->getInstrument() == instrument)
+				{
+	    			return offerRow->getTime();
+				}
+    }
+    return 0.0;
+}
 
 double ForexConnectClient::getBid(const std::string& instrument) {
     TableHandler<Offers, IO2GOffersTable, IO2GOfferTableRow> handler(mpSession);
@@ -394,45 +436,6 @@ double ForexConnectClient::getAsk(const std::string& instrument) {
 				}
     }
     throw std::runtime_error("Could not get offer table row.");
-}
-
-/////////////////////////////////////////////////////////////////////////////////////
-/////////////////////////////////////////////////////////////////////////////////////
-/////////////////////////////////////////////////////////////////////////////////////
-/////////////////////////////////////////////////////////////////////////////////////
-
-std::map<std::string, std::string> ForexConnectClient::getMarketStatus()
-{  
-    O2G2Ptr<IO2GLoginRules> mpLoginRules = mpSession->getLoginRules();
-    O2G2Ptr<IO2GResponse> offersResponse = mpLoginRules->getTableRefreshResponse(Offers);
-
-    O2G2Ptr<IO2GTradingSettingsProvider> tradingSettingsProvider = mpLoginRules->getTradingSettingsProvider();
-    O2G2Ptr<IO2GResponseReaderFactory> factory = mpSession->getResponseReaderFactory();
-    O2G2Ptr<IO2GOffersTableResponseReader> instrumentsReader = factory->createOffersTableReader(offersResponse);
-    std::map<std::string, std::string> tradingsettings;
-    for (int i = 0; i < instrumentsReader->size(); ++i)
-    {
-        O2G2Ptr<IO2GOfferRow> instrumentRow = instrumentsReader->getRow(i);
-        const char *sInstrument = instrumentRow->getInstrument();
-        O2GMarketStatus marketStatus = tradingSettingsProvider->getMarketStatus(sInstrument);
-        std::string sMarketStatus = "U";
-        switch (marketStatus)
-        {
-        case MarketStatusOpen:
-            sMarketStatus = "O";
-            break;
-        case MarketStatusClosed:
-            sMarketStatus = "C";
-            break;
-        }
-        tradingsettings[sInstrument] = sMarketStatus;
-    }
-    return tradingsettings;
-}
-
-boost::python::dict ForexConnectClient::getMarketStatusForPython()
-{
-    return map_to_python_dict(getMarketStatus());
 }
 
 /////////////////////////////////////////////////////////////////////////////////////

@@ -172,6 +172,29 @@ BOOST_PYTHON_MODULE(forexconnect)
         .def(self_ns::str(self))
         .def(self_ns::repr(self));
 
+    class_<AccountInfo>("AccountInfo")
+        .def_readwrite("balance", &AccountInfo::mBalance)
+        .def_readwrite("used_margin", &AccountInfo::mUsedMargin)
+        .def_readwrite("usable_margin", &AccountInfo::mUsableMargin)
+        .def_readwrite("base_unit_size", &AccountInfo::mBaseUnitSize)
+        .def_readwrite("equity", &AccountInfo::mEquity)
+        .def_readwrite("gross_pl", &AccountInfo::mGrossPL)
+        .def(self_ns::str(self))
+        .def(self_ns::repr(self));
+
+    class_<TradeInfo>("TradeInfo")
+        .def_readwrite("instrument", &TradeInfo::mInstrument)
+        .def_readwrite("trade_id", &TradeInfo::mTradeID)
+        .def_readwrite("buy_sell", &TradeInfo::mBuySell)
+        .def_readwrite("open_rate", &TradeInfo::mOpenRate)
+        .def_readwrite("amount", &TradeInfo::mAmount)
+        .add_property("open_date",
+                make_getter(&TradeInfo::mOpenDate, return_value_policy<return_by_value>()),
+                make_setter(&TradeInfo::mOpenDate, return_value_policy<copy_non_const_reference>()))
+        .def_readwrite("gross_pl", &TradeInfo::mGrossPL)
+        .def(self_ns::str(self))
+        .def(self_ns::repr(self));
+  
     class_<Prices>("Prices")
         .def(init<boost::posix_time::ptime, double, double, double, double, double, double, double, double, int>())
         .add_property("date",
@@ -193,6 +216,11 @@ BOOST_PYTHON_MODULE(forexconnect)
     class_<ForexConnectClient>("ForexConnectClient", init<LoginParams>())
         .def(init<std::string, std::string, std::string>())
         .def(init<std::string, std::string, std::string, std::string>())
+        .def("get_trades", &ForexConnectClient::getTradesForPython)
+        .def("open_position", &ForexConnectClient::openPosition,
+             ":param str instrument: type of quotes(ex. 'EUR/USD')\n:param str buysell: buy or sell\n:param int amount: amount of position")
+        .def("close_position", &ForexConnectClient::closePosition,
+            ":param str tradeID: trade id which can get from 'get_trades'")
         .def("get_offers", &ForexConnectClient::getOffersForPython)
         .def("get_time", &ForexConnectClient::getTimeForPython)
         .def("get_trading_status", &ForexConnectClient::getTradingStatusForPython)
@@ -201,9 +229,12 @@ BOOST_PYTHON_MODULE(forexconnect)
         .def("is_connected", &ForexConnectClient::isConnected)
         .def("get_bid", &ForexConnectClient::getBid)
         .def("get_ask", &ForexConnectClient::getAsk)
+        .def("get_bid_ask", &ForexConnectClient::getBidAsk)
         .def("get_historical_prices",
             &ForexConnectClient::getHistoricalPricesForPython,
             getHistoricalPricesForPythonOverloads())
         .def("login", &ForexConnectClient::login)
-        .def("logout", &ForexConnectClient::logout);
+        .def("logout", &ForexConnectClient::logout)
+        .def("get_account_id", &ForexConnectClient::getAccountID)
+        .def("get_account_info", &ForexConnectClient::getAccountInfo);  
 };

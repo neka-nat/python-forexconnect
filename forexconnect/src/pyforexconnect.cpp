@@ -136,7 +136,7 @@ struct prices_pickle_suite : boost::python::pickle_suite
 };
 
 BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(getHistoricalPricesForPythonOverloads,
-				       ForexConnectClient::getHistoricalPricesForPython, 3, 4);
+				       ForexConnectHistoryClient::getHistoricalPricesForPython, 3, 4);
 
 BOOST_PYTHON_MODULE(forexconnect)
 {
@@ -213,28 +213,55 @@ BOOST_PYTHON_MODULE(forexconnect)
         .def(self_ns::repr(self))
         .def_pickle(prices_pickle_suite());
 
-    class_<ForexConnectClient>("ForexConnectClient", init<LoginParams>())
+
+    class_<ForexConnectTradingClient>("ForexConnectTradingClient", init<LoginParams>())
         .def(init<std::string, std::string, std::string>())
         .def(init<std::string, std::string, std::string, std::string>())
-        .def("get_trades", &ForexConnectClient::getTradesForPython)
-        .def("open_position", &ForexConnectClient::openPosition,
+
+        .def("get_trades", &ForexConnectTradingClient::getTradesForPython)
+        .def("open_position", &ForexConnectTradingClient::openPosition,
              ":param str instrument: type of quotes(ex. 'EUR/USD')\n:param str buysell: buy or sell\n:param int amount: amount of position")
-        .def("close_position", &ForexConnectClient::closePosition,
+        .def("close_position", &ForexConnectTradingClient::closePosition,
             ":param str tradeID: trade id which can get from 'get_trades'")
-        .def("get_offers", &ForexConnectClient::getOffersForPython)
-        .def("get_time", &ForexConnectClient::getTimeForPython)
-        .def("get_trading_status", &ForexConnectClient::getTradingStatusForPython)
-        .def("get_offer_time", &ForexConnectClient::getOfferTime)
-        .def("get_offer_trading_status", &ForexConnectClient::getOfferTradingStatus)
-        .def("is_connected", &ForexConnectClient::isConnected)
-        .def("get_bid", &ForexConnectClient::getBid)
-        .def("get_ask", &ForexConnectClient::getAsk)
-        .def("get_bid_ask", &ForexConnectClient::getBidAsk)
+        .def("get_account_id", &ForexConnectTradingClient::getAccountID)
+        .def("get_account_info", &ForexConnectTradingClient::getAccountInfo)
+
+        .def("is_connected", &ForexConnectTradingClient::isConnected)
+        .def("has_error", &ForexConnectTradingClient::hasError)
+        .def("login", &ForexConnectTradingClient::login)
+        .def("logout", &ForexConnectTradingClient::logout);
+
+
+    class_<ForexConnectHistoryClient>("ForexConnectHistoryClient", init<LoginParams>())
+        .def(init<std::string, std::string, std::string>())
+        .def(init<std::string, std::string, std::string, std::string>())
+
         .def("get_historical_prices",
-            &ForexConnectClient::getHistoricalPricesForPython,
+            &ForexConnectHistoryClient::getHistoricalPricesForPython,
             getHistoricalPricesForPythonOverloads())
-        .def("login", &ForexConnectClient::login)
-        .def("logout", &ForexConnectClient::logout)
-        .def("get_account_id", &ForexConnectClient::getAccountID)
-        .def("get_account_info", &ForexConnectClient::getAccountInfo);  
+
+        .def("is_connected", &ForexConnectHistoryClient::isConnected)
+        .def("has_error", &ForexConnectHistoryClient::hasError)
+        .def("login", &ForexConnectHistoryClient::login)
+        .def("logout", &ForexConnectHistoryClient::logout);
+        
+    class_<ForexConnectOffersClient>("ForexConnectOffersClient", init<LoginParams>())
+        .def(init<std::string, std::string, std::string>())
+        .def(init<std::string, std::string, std::string, std::string>())
+
+        .def("get_offers", &ForexConnectOffersClient::getOffersForPython)
+        .def("get_time", &ForexConnectOffersClient::getTimeForPython)
+        .def("get_offer_point_size", &ForexConnectOffersClient::getPointSize)
+        .def("get_contract_currency", &ForexConnectOffersClient::getContractCurrency)
+        .def("get_trading_status", &ForexConnectOffersClient::getTradingStatusForPython)
+        .def("get_offer_time", &ForexConnectOffersClient::getOfferTime)
+        .def("get_offer_trading_status", &ForexConnectOffersClient::getOfferTradingStatus)
+        .def("get_bid", &ForexConnectOffersClient::getBid)
+        .def("get_ask", &ForexConnectOffersClient::getAsk)
+        .def("get_bid_ask", &ForexConnectOffersClient::getBidAsk)
+
+        .def("is_connected", &ForexConnectOffersClient::isConnected)
+        .def("has_error", &ForexConnectOffersClient::hasError)
+        .def("login", &ForexConnectOffersClient::login)
+        .def("logout", &ForexConnectOffersClient::logout);
 };

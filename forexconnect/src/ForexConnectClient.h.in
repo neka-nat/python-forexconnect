@@ -11,6 +11,7 @@
 #include <sstream>
 #include <iomanip>
 #include <stdint.h>
+#include <tuple>
 
 namespace pyforexconnect
 {
@@ -56,7 +57,7 @@ namespace pyforexconnect
 	      TradeInfo();
     };
     std::ostream& operator<<(std::ostream& out, TradeInfo const& ti);
-    
+
     struct Prices
     {
         boost::posix_time::ptime mDate;
@@ -87,25 +88,84 @@ namespace pyforexconnect
     };
     std::ostream& operator<<(std::ostream& out, Prices const& pr);
 
-    class ForexConnectClient
+
+    class ForexConnectTradingClient
     {
         public:
-        ForexConnectClient(const std::string& login,
+        ForexConnectTradingClient(const std::string& login,
                            const std::string& password,
                            const std::string& connection,
                            const std::string& url = DEFAULT_FOREX_URL);
-        ForexConnectClient(const LoginParams& loginParams);
-        ~ForexConnectClient();
+        ForexConnectTradingClient(const LoginParams& loginParams);
+        ~ForexConnectTradingClient();
+        
         std::vector<TradeInfo> getTrades();
+        std::map<std::string, std::string> getOffers();
         boost::python::list getTradesForPython();
+        
         bool openPosition(const std::string& instrument,
               const std::string& buysell,
               int amount);
         bool closePosition(const std::string& tradeID);
-        double getBid(const std::string& instrument);
-        double getAsk(const std::string& instrument);
-        std::string getOfferTradingStatus(const std::string& instrument);
-        double getOfferTime(const std::string& instrument);
+        
+        std::string getAccountID() const;
+        AccountInfo getAccountInfo();
+        
+        bool isConnected() const;
+        bool hasError() const;
+        bool login();
+        void logout();
+
+    private:
+        void init();
+        
+        LoginParams mLoginParams;
+        IO2GSession* mpSession;
+        SessionStatusListener* mpListener;
+        ResponseListener* mpResponseListener;
+        IO2GLoginRules* mpLoginRules;
+        IO2GAccountRow* mpAccountRow;
+        IO2GResponseReaderFactory* mpResponseReaderFactory;
+        IO2GRequestFactory* mpRequestFactory;
+        std::string mAccountID;
+        bool mIsConnected;
+
+        static boost::posix_time::ptime toPtime(double d)
+        {
+            double d_int, d_frac;
+            d_frac = modf(d, &d_int);
+            time_t t = time_t(d_int - 25569.0) * 86400 + time_t(floor((d_frac * 86400) + 0.5));
+            return boost::posix_time::from_time_t(t);
+
+        }
+        
+        static bool findOfferRowBySymbol(IO2GOfferRow *row, std::string symbol)
+        {
+            return (symbol == row->getInstrument() && row->getSubscriptionStatus()[0] == 'T');
+        }
+
+        static bool findOfferRowByOfferId(IO2GOfferRow *row, std::string offerId)
+        {
+            return (offerId == row->getOfferID());
+        }
+
+        static IO2GOffersTableResponseReader* getOffersReader(IO2GResponseReaderFactory* readerFactory,
+                          IO2GResponse *response)
+        {
+            return readerFactory->createOffersTableReader(response);
+        }
+    };
+
+    class ForexConnectHistoryClient
+    {
+        public:
+        ForexConnectHistoryClient(const std::string& login,
+                           const std::string& password,
+                           const std::string& connection,
+                           const std::string& url = DEFAULT_FOREX_URL);
+        ForexConnectHistoryClient(const LoginParams& loginParams);
+        ~ForexConnectHistoryClient();
+
         std::vector<Prices> getHistoricalPrices(const std::string& instrument,
                                                 const double& from,
                                                 const double& to,
@@ -114,16 +174,10 @@ namespace pyforexconnect
                      const double& from,
                      const double& to,
                      const std::string& timeFrame = std::string("m1"));
-        std::map<std::string, std::string> getOffers();
-        std::map<std::string, double> getTime();
-        std::map<std::string, std::string> getTradingStatus();
-        boost::python::dict getOffersForPython();
-        boost::python::dict getTradingStatusForPython();
-        boost::python::dict getTimeForPython();
-        boost::python::tuple getBidAsk(const std::string& instrument);
-        std::string getAccountID() const;
-        AccountInfo getAccountInfo();
+
+
         bool isConnected() const;
+        bool hasError() const;
         bool login();
         void logout();
 
@@ -137,7 +191,6 @@ namespace pyforexconnect
         SessionStatusListener* mpListener;
               ResponseListener* mpResponseListener;
               IO2GLoginRules* mpLoginRules;
-              IO2GAccountRow* mpAccountRow;
               IO2GResponseReaderFactory* mpResponseReaderFactory;
               IO2GRequestFactory* mpRequestFactory;
               std::string mAccountID;
@@ -161,6 +214,43 @@ namespace pyforexconnect
             CO2GDateUtils::CTimeToOleTime(&gttm, &d);
             return d;
         }
+    };
+
+    class ForexConnectOffersClient
+    {
+        public:
+        ForexConnectOffersClient(const std::string& login,
+                           const std::string& password,
+                           const std::string& connection,
+                           const std::string& url = DEFAULT_FOREX_URL);
+        ForexConnectOffersClient(const LoginParams& loginParams);
+        ~ForexConnectOffersClient();
+        double getBid(const std::string& instrument);
+        double getAsk(const std::string& instrument);
+        std::string getOfferTradingStatus(const std::string& instrument);
+        double getOfferTime(const std::string& instrument);
+        double getPointSize(const std::string& instrument);
+        std::string getContractCurrency(const std::string& instrument);
+        std::map<std::string, std::string> getOffers();
+        std::map<std::string, double> getTime();
+        std::map<std::string, std::string> getTradingStatus();
+        boost::python::dict getOffersForPython();
+        boost::python::dict getTradingStatusForPython();
+        boost::python::dict getTimeForPython();
+        boost::python::tuple getBidAsk(const std::string& instrument);
+        bool isConnected() const;
+        bool hasError() const;
+        bool login();
+        void logout();
+
+    private:
+        void init();
+
+        LoginParams mLoginParams;
+        IO2GSession* mpSession;
+        SessionStatusListener* mpListener;
+              IO2GLoginRules* mpLoginRules;
+        bool mIsConnected;
 
         static bool findOfferRowBySymbol(IO2GOfferRow *row, std::string symbol)
         {
@@ -178,13 +268,8 @@ namespace pyforexconnect
             return readerFactory->createOffersTableReader(response);
         }
 
-        static IO2GTradesTableResponseReader* getTradesReader(IO2GResponseReaderFactory* readerFactory,
-							      IO2GResponse *response)
-        {
-            return readerFactory->createTradesTableReader(response);
-        }
     };
-
+    
     void setLogLevel(int level);
 }
 #endif

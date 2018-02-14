@@ -9,7 +9,6 @@
 #include <sstream>
 #include <map>
 #include <unistd.h>
-#include <tuple>
 
 using namespace pyforexconnect;
 

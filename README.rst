@@ -11,8 +11,8 @@ This library is a Python binding of Forexconnect API using boost.python.
 Requirements
 -------------
 
-* Python 3.x
-* boost 1.65
+* Python 3.5.2
+* boost 1.65.1
 * ForexConnectAPI 1.4.1
 
 Build
